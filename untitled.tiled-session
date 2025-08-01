@@ -1,0 +1,36 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "lol.tsx",
+    "expandedProjectPaths": [
+    ],
+    "file.lastUsedOpenFilter": "All Files (*)",
+    "fileStates": {
+        "lol.tsx": {
+            "dynamicWrapping": true,
+            "scaleInDock": 1,
+            "scaleInEditor": 5.5
+        },
+        "wiz.tsx": {
+            "dynamicWrapping": false,
+            "scaleInDock": 1,
+            "scaleInEditor": 4
+        }
+    },
+    "last.imagePath": "/home/kali/Documents/Platformer/platformer_aplha/sprites/blocks",
+    "map.height": 5,
+    "map.width": 5,
+    "openFiles": [
+        "lol.tsx"
+    ],
+    "project": "untitled.tiled-project",
+    "property.type": "bool",
+    "recentFiles": [
+        "lol.tsx",
+        "wiz.tsx"
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.type": 1
+}
