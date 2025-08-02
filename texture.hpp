@@ -31,7 +31,7 @@ public:
     void free();
 
     // image load to texture
-    void WIMG_Load(string src, SDL_Renderer *wRenderer);
+    void WIMG_Load(string src);
 
     // text to texture
     void textTex(string str, TTF_Font *wFont, SDL_Color wColor, SDL_Renderer *wRenderer);

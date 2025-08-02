@@ -13,17 +13,19 @@ bool renderLoop(const char *path)
     // Player setup
     Player player;
     player.setMap(map);
-    string src = "sprites/wizard.png";
-    int cols = 3;
-    int cells = 12;
-    player.playerTexture.WIMG_Load(src, wRenderer);
+    string src = "sprites/wizard/wiz.png";
+    string rightSrc = "sprites/wizard/wiz_move.png";
+    string leftSrc = "sprites/wizard/wiz_move_flip.png";
+    int cols = 6;
+    int cells = 6;
+    player.playerTexture.WIMG_Load(src);
     player.setYPos(0);
     player.gravity.setG(1);
     player.setWidth(64);
     player.setHeight(64);
     player.playerTexture.setCells(cells);
     player.playerTexture.setCols(cols);
-    player.playerTexture.setFPS(10);
+    player.playerTexture.setFPS(60);
     // Timer for deltaTime tracking
     Timer frameTimer;
     frameTimer.start();
@@ -48,13 +50,13 @@ bool renderLoop(const char *path)
                 {
                 case SDLK_RIGHT:
                     player.setXVel(player.xVel() + player.maxVel());
-                    player.setFlip(SDL_FLIP_NONE);
                     player.setRotate(5);
+                    player.playerTexture.WIMG_Load(rightSrc);
                     break;
                 case SDLK_LEFT:
                     player.setXVel(player.xVel() - player.maxVel());
-                    player.setFlip(SDL_FLIP_HORIZONTAL);
                     player.setRotate(-5);
+                    player.playerTexture.WIMG_Load(leftSrc);
                     break;
                 case SDLK_SPACE:
                     cout << "SPACE0" << endl;
@@ -73,10 +75,12 @@ bool renderLoop(const char *path)
                 case SDLK_RIGHT:
                     player.setXVel(player.xVel() - player.maxVel());
                     player.setRotate(0);
+                    player.playerTexture.WIMG_Load(src);
                     break;
                 case SDLK_LEFT:
                     player.setXVel(player.xVel() + player.maxVel());
                     player.setRotate(0);
+                    player.playerTexture.WIMG_Load(src);
                     break;
                 }
             }
@@ -92,7 +96,7 @@ bool renderLoop(const char *path)
         // update camera
         int map_width_px = map->width * map->tile_width;
         int map_height_px = map->height * map->tile_height;
-        float scale = 2.0f; // or whatever your zoom is
+        float scale = 2.0f; 
         cout << player.yVel() << endl;
         // Compute scaled screen dimensions
         int scaledScreenWidth = SCREEN_WIDTH / scale;
@@ -119,7 +123,7 @@ bool renderLoop(const char *path)
         // Update game logic
         player.update(deltaTime);
         // Rendering
-        SDL_SetRenderDrawColor(wRenderer, 0, 0, 0, 255);
+        SDL_SetRenderDrawColor(wRenderer, 100, 0, 150, 255);
         SDL_RenderClear(wRenderer);
         render_map(map);
         player.moveRender();
