@@ -25,7 +25,7 @@ bool renderLoop(const char *path)
     player.setHeight(64);
     player.playerTexture.setCells(cells);
     player.playerTexture.setCols(cols);
-    player.playerTexture.setFPS(10);
+    player.playerTexture.setFPS(60);
     // Timer for deltaTime tracking
     Timer frameTimer;
     frameTimer.start();
