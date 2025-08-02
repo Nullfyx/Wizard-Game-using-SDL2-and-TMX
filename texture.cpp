@@ -21,7 +21,7 @@ void WTexture::free()
 }
 
 // image load to texture
-void WTexture::WIMG_Load(string src, SDL_Renderer *wRenderer)
+void WTexture::WIMG_Load(string src)
 {
     // free any pre existing texture
     free();
