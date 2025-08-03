@@ -23,8 +23,8 @@ bool renderLoop(const char *path)
     int cols = 6;
     int cells = 6;
     player.playerTexture.WIMG_Load(src);
-    player.setWidth(64);
-    player.setHeight(64);
+    player.setWidth(32);
+    player.setHeight(32);
     player.playerTexture.setCells(cells);
     player.playerTexture.setCols(cols);
     player.playerTexture.setFPS(60);
@@ -60,9 +60,16 @@ bool renderLoop(const char *path)
             if (e.type == SDL_KEYDOWN && e.key.repeat == 0)
             {
                 if (e.key.keysym.sym == SDLK_LEFT)
+                {
                     moveLeft = true;
+                    player.playerTexture.WIMG_Load(leftSrc);
+                }
                 if (e.key.keysym.sym == SDLK_RIGHT)
+                {
+                    player.playerTexture.WIMG_Load(rightSrc);
+
                     moveRight = true;
+                }
                 if ((e.key.keysym.sym == SDLK_SPACE) && (jumpIndex < 10))
                 {
                     jumpIndex = 1;

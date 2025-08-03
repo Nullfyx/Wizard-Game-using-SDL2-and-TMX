@@ -210,12 +210,6 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump)
     kxPos = static_cast<double>(wXPos);
     kyPos = static_cast<double>(wYPos);
 
-    // Input debug
-    cout << "k " << kxPos << " " << kyPos << endl;
-    cout << "p " << wXPos << " " << wYPos << endl;
-    cout << "isGrounded (before move): " << isGrounded << endl;
-    cout << "moveleft: " << moveLeft << ", moveRight: " << moveRight << ", jump: " << jump << endl;
-
     // Movement inputs
     if (moveLeft && !moveRight)
         applyForce(-1000, 0);
@@ -228,9 +222,15 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump)
         else
             kvelocityX = 0;
     }
+    if (isGrounded && !moveLeft && !moveRight)
+    {
+        kvelocityX = 0;
+        kaccelerationX = 0;
+    }
+
     // Jumping
     if (jump && isGrounded)
-        applyForce(0, -2000);
+        applyForce(0, -4000);
 
     // Apply gravity if airborne
     if (!isGrounded)
@@ -257,8 +257,24 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump)
         isGrounded = true;
         kvelocityY = 0;
         kaccelerationY = 0;
-        int tileY = (kyPos + wHeight) / map->tile_height;
-        kyPos = tileY * map->tile_height - wHeight;
+        // int tileY = (kyPos + wHeight) / map->tile_height;
+        // kyPos = tileY * map->tile_height - wHeight;
+        // Check if player overlaps the tile vertically
+        int bottomY = kyPos + wHeight;
+        int tileY = bottomY / map->tile_height;
+        int tileTop = tileY * map->tile_height;
+
+        int overlapY = bottomY - tileTop;
+
+        if (touchingGround && !jumping && overlapY > 0 && overlapY <= map->tile_height)
+        {
+            isGrounded = true;
+            kvelocityY = 0;
+            kaccelerationY = 0;
+
+            // Snap Y pos exactly to the top of the tile
+            kyPos -= overlapY; // pull player up by overlap
+        }
     }
 
     else if (jumping && touchingGround && !isGrounded)
@@ -281,18 +297,21 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump)
         if (kvelocityX > 0)
         {
             float overlap = (kxPos + wWidth) - tileRightX * tileW;
+            cout << "overlap: " << overlap << endl;
+
             if (overlap > 0)
             {
-                applyForce(-overlap * 500, 0);
+                applyForce(-overlap * 5, 0);
                 kxPos -= overlap;
             }
         }
         else if (kvelocityX < 0)
         {
             float overlap = tileX * tileW - kxPos;
+            cout << "overlap: " << overlap << endl;
             if (overlap > 0)
             {
-                applyForce(overlap * 500, 0);
+                applyForce(-overlap * 5, 0);
                 kxPos += overlap;
             }
         }

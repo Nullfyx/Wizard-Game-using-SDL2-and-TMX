@@ -9,12 +9,36 @@
     ],
     "file.lastUsedOpenFilter": "All Files (*)",
     "fileStates": {
+        "3.tmx": {
+            "scale": 0.34338541666666667,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 961.0192628545428,
+                "y": 961.0192628545426
+            }
+        },
         "levels/1.tmx": {
             "scale": 0.34338541666666667,
             "selectedLayer": 0,
             "viewCenter": {
                 "x": 961.0192628545428,
                 "y": 961.0192628545426
+            }
+        },
+        "levels/2.tmx": {
+            "scale": 0.34338541666666667,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 961.0192628545428,
+                "y": 961.0192628545426
+            }
+        },
+        "levels/3.tmx": {
+            "scale": 0.20484375,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 961.7086193745233,
+                "y": 961.7086193745232
             }
         },
         "lol.tsx": {
@@ -31,7 +55,8 @@
             }
         },
         "wiz.tsx": {
-            "dynamicWrapping": true
+            "dynamicWrapping": true,
+            "scaleInDock": 1
         }
     },
     "last.imagePath": "/home/kali/Documents/Platformer/platformer_aplha/sprites/blocks",
