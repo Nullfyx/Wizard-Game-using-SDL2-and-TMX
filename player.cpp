@@ -206,7 +206,6 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump)
 {
     jumping = jump;
     kdt = dt;
-
     // Copy current screen position into kpos (double precision)
     kxPos = static_cast<double>(wXPos);
     kyPos = static_cast<double>(wYPos);
@@ -222,11 +221,13 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump)
         applyForce(-1000, 0);
     else if (moveRight && !moveLeft)
         applyForce(1000, 0);
-    if (isGrounded && abs(kvelocityX) > 0.01f)
+    if (isGrounded)
     {
-        kvelocityX *= 0.9f;
+        if (abs(kvelocityX) > 0.1f)
+            kvelocityX *= 0.9f;
+        else
+            kvelocityX = 0;
     }
-
     // Jumping
     if (jump && isGrounded)
         applyForce(0, -2000);
@@ -239,7 +240,16 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump)
     move();
 
     // After moving, update tile collision & grounding
-    bool touchingGround = isTileCollidable();
+    bool touchingGround = isTileCollidableY();
+    bool touchingWall = isTileCollidableX();
+
+    // If jumping and hit a ceiling
+    if (jumping && isTileCollidableX() && kvelocityY < 0)
+    {
+        kvelocityY = 0;
+        kaccelerationY = 0;
+        jumping = false;
+    }
 
     // Snap to tile if landing
     if (touchingGround && !jumping)
@@ -259,6 +269,39 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump)
     else if (!touchingGround)
     {
         isGrounded = false;
+    }
+
+    if (touchingWall)
+    {
+        // Determine overlap
+        int tileW = map->tile_width;
+        int tileX = kxPos / tileW;
+        int tileRightX = (kxPos + wWidth) / tileW;
+
+        if (kvelocityX > 0)
+        {
+            float overlap = (kxPos + wWidth) - tileRightX * tileW;
+            if (overlap > 0)
+            {
+                applyForce(-overlap * 500, 0);
+                kxPos -= overlap;
+            }
+        }
+        else if (kvelocityX < 0)
+        {
+            float overlap = tileX * tileW - kxPos;
+            if (overlap > 0)
+            {
+                applyForce(overlap * 500, 0);
+                kxPos += overlap;
+            }
+        }
+
+        if (fabs(kvelocityX) < 1.0f)
+        {
+            kvelocityX = 0;
+            kaccelerationX = 0;
+        }
     }
 
     // Update rect based on kPos
@@ -288,7 +331,7 @@ void Player::update(float d)
     // cout << isGrounded << endl;
     dt = d;
 }
-bool Player::isTileCollidable()
+bool Player::isTileCollidableY()
 {
     if (!map)
     {
@@ -301,6 +344,8 @@ bool Player::isTileCollidable()
     // Left and right foot positions
     int tileX1 = wXPos / map->tile_width;
     int tileX2 = (wXPos + wWidth - 1) / map->tile_width;
+
+    cout << "kyPos: " << kyPos << " " << "tileY: " << tileY << " " << "kxPos: " << kxPos << "tileX1: " << tileX1 << "tileX2: " << tileX2 << endl;
 
     const tmx_layer *layer = map->ly_head;
     while (layer && layer->type != L_LAYER)
@@ -340,6 +385,71 @@ bool Player::isTileCollidable()
         }
     }
 
+    return collidable;
+}
+bool Player::isTileCollidableX()
+{
+    if (!map)
+    {
+        std::cerr << "[ERROR] Map is NULL!\n";
+        return false;
+    }
+
+    // Top and bottom Y positions
+    int tileY1 = wYPos / map->tile_height;
+    int tileY2 = (wYPos + wHeight - 1) / map->tile_height;
+
+    // Left and right X positions
+    int tileX1 = wXPos / map->tile_width;
+    int tileX2 = (wXPos + wWidth - 1) / map->tile_width;
+
+    cout << "[DEBUG] kyPos: " << kyPos << ", kxPos: " << kxPos
+         << ", tileY1: " << tileY1 << ", tileY2: " << tileY2
+         << ", tileX1: " << tileX1 << ", tileX2: " << tileX2 << endl;
+
+    const tmx_layer *layer = map->ly_head;
+    while (layer && layer->type != L_LAYER)
+    {
+        layer = layer->next;
+    }
+
+    if (!layer || !layer->content.gids)
+    {
+        std::cerr << "[ERROR] No valid tile layer or gids found!\n";
+        return false;
+    }
+
+    // We'll check the sides of the player at top and bottom
+    bool collidable = false;
+
+    for (int tileY : {tileY1, tileY2})
+    {
+        for (int tileX : {tileX1, tileX2})
+        {
+            if (tileX < 0 || tileY < 0 || tileX >= (int)map->width || tileY >= (int)map->height)
+                continue;
+
+            int index = tileY * map->width + tileX;
+            unsigned int gid = layer->content.gids[index] & TMX_FLIP_BITS_REMOVAL;
+
+            if (gid == 0)
+                continue;
+
+            const tmx_tile *tile = tmx_get_tile(map, gid);
+            if (!tile || !tile->properties)
+                continue;
+
+            tmx_property *prop = tmx_get_property(tile->properties, "collidable");
+            if (prop && prop->type == PT_BOOL && prop->value.boolean)
+            {
+                collidable = true;
+                cout << "[DEBUG] Collidable tile detected at (" << tileX << "," << tileY << ")\n";
+                return true;
+            }
+        }
+    }
+
+    cout << "isCollidableX = " << collidable << endl;
     return collidable;
 }
 

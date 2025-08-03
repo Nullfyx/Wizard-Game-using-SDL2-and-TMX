@@ -50,8 +50,8 @@ void Kinematics::move()
 
     if (kvelocityY > 15)
         kvelocityY = 15;
-    else if (kvelocityY < -40)
-        kvelocityY = -40;
+    else if (kvelocityY < -60)
+        kvelocityY = -60;
 
     kxPos += kvelocityX;
     kyPos += kvelocityY;

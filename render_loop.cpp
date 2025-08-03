@@ -139,7 +139,6 @@ bool renderLoop(const char *path)
         SDL_RenderClear(wRenderer);
         render_map(map);
         player.moveRender(moveRight, moveLeft, jump);
-        player.isTileCollidable();
         SDL_RenderPresent(wRenderer);
 
         // Cap frame rate at ~60 FPS

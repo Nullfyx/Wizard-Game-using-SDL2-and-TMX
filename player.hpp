@@ -155,7 +155,8 @@ public:
     Gravity gravity;
 
     // collision detection
-    bool isTileCollidable();
+    bool isTileCollidableY();
+    bool isTileCollidableX();
 
     // jump
     void jump();
