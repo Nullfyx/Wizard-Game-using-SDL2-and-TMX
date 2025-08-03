@@ -1,6 +1,7 @@
 #include "render_loop.hpp"
 bool renderLoop(const char *path)
 {
+    int jumpIndex = 0;
     SDL_Event e;
     bool quit = false;
     // render the map
@@ -37,11 +38,21 @@ bool renderLoop(const char *path)
     while (!quit)
     {
         cout << "========================" << endl;
+        cout << "jumpindex: " << jumpIndex << endl;
+        if (jumpIndex > 0)
+        {
+            jump = true;
+            jumpIndex = (jumpIndex + 1) % 5;
+        }
+        else
+        {
+            jumpIndex = 0;
+            jump = false;
+        }
+
         cout << player.yVel() << ' ' << player.isJumping() << endl;
         deltaTime = frameTimer.getTicks() / 1000.0f;
         frameTimer.start();
-        if (jump)
-            jump = false;
         // Input handling
         while (SDL_PollEvent(&e))
         {
@@ -54,8 +65,11 @@ bool renderLoop(const char *path)
                     moveLeft = true;
                 if (e.key.keysym.sym == SDLK_RIGHT)
                     moveRight = true;
-                if (e.key.keysym.sym == SDLK_SPACE)
+                if ((e.key.keysym.sym == SDLK_SPACE) && (jumpIndex < 5))
+                {
+                    jumpIndex = 1;
                     jump = true;
+                }
             }
 
             if (e.type == SDL_KEYUP && e.key.repeat == 0)

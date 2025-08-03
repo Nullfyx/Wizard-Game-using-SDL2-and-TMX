@@ -8,7 +8,7 @@ Player::Player()
     wAtk = 10;  // weak at the begininning!
     wLives = 9; // maybe its a cat!
     wXPos = 0;
-    upVel = false;
+    isGrounded = false;
     wYPos = 0;
     wXVel = 0;
     wGravityVel = (wWeight / gravity.g()) * dt * 10;
@@ -91,9 +91,9 @@ auto Player::getMap()
     return map;
 }
 
-bool Player::getUpVel()
+bool Player::getisGrounded()
 {
-    return upVel;
+    return isGrounded;
 }
 
 double Player::jumpPower()
@@ -193,93 +193,95 @@ void Player::setMap(tmx_map *m)
     map = m;
 }
 
-void Player::setUpVel(bool u)
+void Player::setisGrounded(bool u)
 {
-    upVel = u;
+    isGrounded = u;
 }
 
 void Player::setJumping(bool j)
 {
     jumping = j;
 }
-
 void Player::moveRender(bool moveRight, bool moveLeft, bool jump)
 {
-    int tileY = (kyPos + wHeight) / map->tile_height;
-    cout << "k " << kxPos << " " << kyPos << endl;
-    cout << "p " << wXPos << " " << wYPos << endl;
-    cout << "Collidable: " << isTileCollidable() << endl;
-    cout << "upVel" << upVel << endl;
-    // check if player is on ground
-    isTileCollidable(); // updates upVel internally
+    jumping = jump;
+    kdt = dt;
 
+    // Copy current screen position into kpos (double precision)
     kxPos = static_cast<double>(wXPos);
     kyPos = static_cast<double>(wYPos);
-    kdt = dt;
-    cout << endl
-         << dt << endl;
+
+    // Input debug
+    cout << "k " << kxPos << " " << kyPos << endl;
+    cout << "p " << wXPos << " " << wYPos << endl;
+    cout << "isGrounded (before move): " << isGrounded << endl;
     cout << "moveleft: " << moveLeft << ", moveRight: " << moveRight << ", jump: " << jump << endl;
+
+    // Movement inputs
     if (moveLeft && !moveRight)
-    {
         applyForce(-200, 0);
-    }
     else if (moveRight && !moveLeft)
-    {
         applyForce(200, 0);
-    }
-    else if (jump)
-    {
-        applyForce(0, -200);
-    }
-    else
-    {
-        setXVel(0);
-    }
-    applyForce(0, kmass * kgravityConstant);
+
+    // Jumping
+    if (jump && isGrounded)
+        applyForce(0, -2000);
+
+    // Apply gravity if airborne
+    if (!isGrounded)
+        applyForce(0, kmass * kgravityConstant);
+
+    // Apply forces to update kPos
     move();
 
-    // update rect
-    playerRect.x = kxPos;
-    playerRect.y = kyPos;
+    // After moving, update tile collision & grounding
+    bool touchingGround = isTileCollidable();
+
+    // Snap to tile if landing
+    if (touchingGround && !jumping)
+    {
+        isGrounded = true;
+        kvelocityY = 0;
+        kaccelerationY = 0;
+        int tileY = (kyPos + wHeight) / map->tile_height;
+        kyPos = tileY * map->tile_height - wHeight;
+    }
+
+    else if (jumping && touchingGround && !isGrounded)
+    {
+        jumping = false;
+        isGrounded = true;
+    }
+    else if (!touchingGround)
+    {
+        isGrounded = false;
+    }
+
+    // Update rect based on kPos
+    playerRect.x = static_cast<int>(kxPos);
+    playerRect.y = static_cast<int>(kyPos);
     playerRect.w = wWidth;
     playerRect.h = wHeight;
 
-    // camera offset render
+    // Update world int pos
+    wXPos = playerRect.x;
+    wYPos = playerRect.y;
+
+    // Adjust for camera
     SDL_Rect screenRect = {
         playerRect.x - camera.x,
         playerRect.y - camera.y,
         playerRect.w,
         playerRect.h};
 
-    if (isTileCollidable() && !jumping)
-    {
-        setUpVel(true);
-        kyPos = tileY * map->tile_height - wHeight; // Snap to tile
-        wYVel = 0;
-    }
-
-    if (jumping && isTileCollidable() && !upVel)
-    {
-        cout << "incollidable: " << isTileCollidable() << endl;
-        jumping = false;
-        upVel = true;
-        wYVel = 0;
-    }
-
-    // if(!isTileCollidable() && upVel)
-    // {
-    //     upVel = isTileCollidable();
-    // }
-
+    // Animate and draw
     playerTexture.animateSprite(wRenderer, playerTexture.getCols(), playerTexture.getCells(), screenRect, rotate, NULL, flip);
     SDL_RenderDrawRect(wRenderer, &screenRect);
-    wXPos = static_cast<int>(kxPos);
-    wYPos = static_cast<int>(kyPos);
 }
 
 void Player::update(float d)
 {
-    // cout << upVel << endl;
+    // cout << isGrounded << endl;
     dt = d;
 }
 bool Player::isTileCollidable()

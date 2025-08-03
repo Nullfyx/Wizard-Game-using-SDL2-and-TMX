@@ -59,8 +59,8 @@ class Player : public Kinematics
     // player map
     tmx_map *map;
 
-    // upvelocity
-    double upVel;
+    // isGrounded
+    double isGrounded;
 
     // check if the player is jumping
     bool jumping;
@@ -100,7 +100,7 @@ public:
 
     auto getMap();
 
-    bool getUpVel();
+    bool getisGrounded();
 
     bool isJumping();
 
@@ -138,7 +138,7 @@ public:
 
     void setMap(tmx_map *map);
 
-    void setUpVel(bool u);
+    void setisGrounded(bool u);
 
     void setJumping(bool j);
 

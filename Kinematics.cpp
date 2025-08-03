@@ -3,7 +3,7 @@
 Kinematics::Kinematics()
 {
     kgravityConstant = 9.8;
-    kmass = 60;
+    kmass = 40;
     kxPos = 0;
     kyPos = 0;
     kvelocityY = 0;
@@ -43,15 +43,15 @@ void Kinematics::move()
     kvelocityY += kaccelerationY * kdt;
 
     // Cap velocities both directions
-    if (kvelocityX > 20)
-        kvelocityX = 20;
-    else if (kvelocityX < -20)
-        kvelocityX = -20;
+    if (kvelocityX > 15)
+        kvelocityX = 15;
+    else if (kvelocityX < -15)
+        kvelocityX = -15;
 
-    if (kvelocityY > 20)
-        kvelocityY = 20;
-    else if (kvelocityY < -20)
-        kvelocityY = -20;
+    if (kvelocityY > 15)
+        kvelocityY = 15;
+    else if (kvelocityY < -40)
+        kvelocityY = -40;
 
     kxPos += kvelocityX;
     kyPos += kvelocityY;
