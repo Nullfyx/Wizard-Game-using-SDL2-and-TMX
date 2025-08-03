@@ -10,6 +10,9 @@ bool renderLoop(const char *path)
         tmx_perror("cannot load map");
         return false;
     }
+    bool moveLeft = false;
+    bool moveRight = false;
+    bool jump = false;
     // Player setup
     Player player;
     player.setMap(map);
@@ -33,11 +36,12 @@ bool renderLoop(const char *path)
 
     while (!quit)
     {
-
+        cout << "========================" << endl;
+        cout << player.yVel() << ' ' << player.isJumping() << endl;
         deltaTime = frameTimer.getTicks() / 1000.0f;
         frameTimer.start();
-        float jumpImpulse = -10;
-
+        if (jump)
+            jump = false;
         // Input handling
         while (SDL_PollEvent(&e))
         {
@@ -46,26 +50,20 @@ bool renderLoop(const char *path)
 
             if (e.type == SDL_KEYDOWN && e.key.repeat == 0)
             {
-                switch (e.key.keysym.sym)
-                {
-                case SDLK_RIGHT:
-                    player.setXVel(player.xVel() + player.maxVel());
-                    player.setRotate(5);
-                    player.playerTexture.WIMG_Load(rightSrc);
-                    break;
-                case SDLK_LEFT:
-                    player.setXVel(player.xVel() - player.maxVel());
-                    player.setRotate(-5);
-                    player.playerTexture.WIMG_Load(leftSrc);
-                    break;
-                case SDLK_SPACE:
-                    cout << "SPACE0" << endl;
-                    if (player.getUpVel())
-                    {
-                        player.jump();
-                    }
-                    break;
-                }
+                if (e.key.keysym.sym == SDLK_LEFT)
+                    moveLeft = true;
+                if (e.key.keysym.sym == SDLK_RIGHT)
+                    moveRight = true;
+                if (e.key.keysym.sym == SDLK_SPACE)
+                    jump = true;
+            }
+
+            if (e.type == SDL_KEYUP && e.key.repeat == 0)
+            {
+                if (e.key.keysym.sym == SDLK_LEFT)
+                    moveLeft = false;
+                if (e.key.keysym.sym == SDLK_RIGHT)
+                    moveRight = false;
             }
 
             if (e.type == SDL_KEYUP && e.key.repeat == 0)
@@ -96,15 +94,17 @@ bool renderLoop(const char *path)
         // update camera
         int map_width_px = map->width * map->tile_width;
         int map_height_px = map->height * map->tile_height;
-        float scale = 2.0f; 
-        cout << player.yVel() << endl;
+        float scale = 2.0f;
         // Compute scaled screen dimensions
         int scaledScreenWidth = SCREEN_WIDTH / scale;
         int scaledScreenHeight = SCREEN_HEIGHT / scale;
 
         // Update camera
-        camera.x = player.xPos() + player.width() / 2 - scaledScreenWidth / 2;
-        camera.y = player.yPos() + player.height() / 2 - scaledScreenHeight / 2;
+        if (!player.isJumping())
+        {
+            camera.y = player.kyPos + player.height() / 2 - scaledScreenHeight / 2;
+        }
+        camera.x = player.kxPos + player.width() / 2 - scaledScreenWidth / 2;
 
         // Clamp camera inside map
         if (camera.x < 0)
@@ -126,7 +126,7 @@ bool renderLoop(const char *path)
         SDL_SetRenderDrawColor(wRenderer, 100, 0, 150, 255);
         SDL_RenderClear(wRenderer);
         render_map(map);
-        player.moveRender();
+        player.moveRender(moveRight, moveLeft, jump);
         player.isTileCollidable();
         SDL_RenderPresent(wRenderer);
 

@@ -11,12 +11,13 @@ Player::Player()
     upVel = false;
     wYPos = 0;
     wXVel = 0;
-    wGravityVel = 1;
+    wGravityVel = (wWeight / gravity.g()) * dt * 10;
     wYVel = wGravityVel;
     flip = SDL_FLIP_NONE;
     rotate = 0.00;
-    wJumpPower = 100; // N
+    wJumpPower = -100; // N
     map = nullptr;
+    jumping = false;
 };
 
 // getters and setters
@@ -98,6 +99,11 @@ bool Player::getUpVel()
 double Player::jumpPower()
 {
     return wJumpPower;
+}
+
+bool Player::isJumping()
+{
+    return jumping;
 }
 
 void Player::setWidth(int w)
@@ -191,36 +197,50 @@ void Player::setUpVel(bool u)
 {
     upVel = u;
 }
-void Player::moveRender()
+
+void Player::setJumping(bool j)
 {
+    jumping = j;
+}
+
+void Player::moveRender(bool moveRight, bool moveLeft, bool jump)
+{
+    int tileY = (kyPos + wHeight) / map->tile_height;
+    cout << "k " << kxPos << " " << kyPos << endl;
+    cout << "p " << wXPos << " " << wYPos << endl;
+    cout << "Collidable: " << isTileCollidable() << endl;
+    cout << "upVel" << upVel << endl;
     // check if player is on ground
     isTileCollidable(); // updates upVel internally
 
-    // gravity
-    wGravityVel = (wWeight / gravity.g()) * dt * 10;
-
-    // move
-    if (!upVel)
+    kxPos = static_cast<double>(wXPos);
+    kyPos = static_cast<double>(wYPos);
+    kdt = dt;
+    cout << endl
+         << dt << endl;
+    cout << "moveleft: " << moveLeft << ", moveRight: " << moveRight << ", jump: " << jump << endl;
+    if (moveLeft && !moveRight)
     {
-        // Add gravity gradually
-        wYVel += (wWeight / gravity.g()) * dt * 10;
+        applyForce(-200, 0);
+    }
+    else if (moveRight && !moveLeft)
+    {
+        applyForce(200, 0);
+    }
+    else if (jump)
+    {
+        applyForce(0, -200);
     }
     else
     {
-        wYVel = 0; // Reset on ground
+        setXVel(0);
     }
-    if (wYVel > wMaxVel)
-        wYVel = wMaxVel;
-
-    // Move
-    wYPos += wYVel * dt * 100;
-    wXPos += wXVel * dt * 100;
-
-    // fix awkward y positioning
+    applyForce(0, kmass * kgravityConstant);
+    move();
 
     // update rect
-    playerRect.x = wXPos;
-    playerRect.y = wYPos;
+    playerRect.x = kxPos;
+    playerRect.y = kyPos;
     playerRect.w = wWidth;
     playerRect.h = wHeight;
 
@@ -231,8 +251,30 @@ void Player::moveRender()
         playerRect.w,
         playerRect.h};
 
+    if (isTileCollidable() && !jumping)
+    {
+        setUpVel(true);
+        kyPos = tileY * map->tile_height - wHeight; // Snap to tile
+        wYVel = 0;
+    }
+
+    if (jumping && isTileCollidable() && !upVel)
+    {
+        cout << "incollidable: " << isTileCollidable() << endl;
+        jumping = false;
+        upVel = true;
+        wYVel = 0;
+    }
+
+    // if(!isTileCollidable() && upVel)
+    // {
+    //     upVel = isTileCollidable();
+    // }
+
     playerTexture.animateSprite(wRenderer, playerTexture.getCols(), playerTexture.getCells(), screenRect, rotate, NULL, flip);
     SDL_RenderDrawRect(wRenderer, &screenRect);
+    wXPos = static_cast<int>(kxPos);
+    wYPos = static_cast<int>(kyPos);
 }
 
 void Player::update(float d)
@@ -292,25 +334,14 @@ bool Player::isTileCollidable()
         }
     }
 
-    if (collidable)
-    {
-        setUpVel(true);
-        wYPos = tileY * map->tile_height - wHeight; // Snap to tile
-        wYVel = 0;
-        return true;
-    }
-    else
-    {
-        setUpVel(false);
-        return false;
-    }
+    return collidable;
 }
 
 void Player::jump()
 {
-    if (upVel)
+    if (!jumping)
     {
-        wYPos += -wJumpPower * 40 * dt;
-        upVel = false;
+        wYVel += wJumpPower;
+        jumping = true;
     }
 }

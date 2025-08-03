@@ -7,9 +7,10 @@
 #include "texture.hpp"
 #include "timer.hpp"
 #include <tmx.h>
+#include "Kinematics.hpp"
 using namespace std;
 
-class Player
+class Player : public Kinematics
 {
     // width, height of player
     int wWidth, wHeight;
@@ -61,6 +62,9 @@ class Player
     // upvelocity
     double upVel;
 
+    // check if the player is jumping
+    bool jumping;
+
 public:
     // constructor
     Player();
@@ -98,6 +102,8 @@ public:
 
     bool getUpVel();
 
+    bool isJumping();
+
     void setWidth(int w);
 
     void setHeight(int h);
@@ -134,8 +140,10 @@ public:
 
     void setUpVel(bool u);
 
+    void setJumping(bool j);
+
     // move the player
-    void moveRender();
+    void moveRender(bool moveRight, bool moveLeft, bool jump);
 
     // update the time;
     void update(float d);
