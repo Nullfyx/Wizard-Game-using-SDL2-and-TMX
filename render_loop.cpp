@@ -23,8 +23,6 @@ bool renderLoop(const char *path)
     int cols = 6;
     int cells = 6;
     player.playerTexture.WIMG_Load(src);
-    player.setYPos(0);
-    player.gravity.setG(1);
     player.setWidth(64);
     player.setHeight(64);
     player.playerTexture.setCells(cells);
@@ -50,7 +48,7 @@ bool renderLoop(const char *path)
             jump = false;
         }
 
-        cout << player.yVel() << ' ' << player.isJumping() << endl;
+        cout << player.yVel() << ' ' << jump << endl;
         deltaTime = frameTimer.getTicks() / 1000.0f;
         frameTimer.start();
         // Input handling
@@ -65,7 +63,7 @@ bool renderLoop(const char *path)
                     moveLeft = true;
                 if (e.key.keysym.sym == SDLK_RIGHT)
                     moveRight = true;
-                if ((e.key.keysym.sym == SDLK_SPACE) && (jumpIndex < 5))
+                if ((e.key.keysym.sym == SDLK_SPACE) && (jumpIndex < 10))
                 {
                     jumpIndex = 1;
                     jump = true;
@@ -114,7 +112,7 @@ bool renderLoop(const char *path)
         int scaledScreenHeight = SCREEN_HEIGHT / scale;
 
         // Update camera
-        if (!player.isJumping())
+        if (!jump)
         {
             camera.y = player.kyPos + player.height() / 2 - scaledScreenHeight / 2;
         }

@@ -219,9 +219,13 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump)
 
     // Movement inputs
     if (moveLeft && !moveRight)
-        applyForce(-200, 0);
+        applyForce(-1000, 0);
     else if (moveRight && !moveLeft)
-        applyForce(200, 0);
+        applyForce(1000, 0);
+    if (isGrounded && abs(kvelocityX) > 0.01f)
+    {
+        kvelocityX *= 0.9f;
+    }
 
     // Jumping
     if (jump && isGrounded)
