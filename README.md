@@ -27,11 +27,12 @@ To build and run the project, make sure you have the following libraries install
 * **tmx** (TMX map parsing)
 * **libxml2**
 * **zlib**
+* **SDL2_ttf**
 
 ### 🔧 Compile the Project
 
 ```bash
-g++ *.cpp -lSDL2 -lSDL2_image -lxml2 -ltmx -lz -o wiz
+g++ *.cpp -lSDL2 -lSDL2_ttf -lSDL2_image -lxml2 -ltmx -lz -o wiz
 ```
 
 ### ▶️ Run the Game
