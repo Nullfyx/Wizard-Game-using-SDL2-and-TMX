@@ -44,4 +44,4 @@ g++ *.cpp -lSDL2 -lSDL2_image -lxml2 -ltmx -lz -o wiz
 ## 📂 Folder Structure
 - `levels/` – Tiled maps
 - `sprites/` – Player & tileset images
-- `src/` – Core C++ files
+- `./` – Core C++ files
