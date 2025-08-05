@@ -20,7 +20,26 @@ No Unity. No Unreal. Just raw code, physics, collisions, and tiled maps.
 - Tiled (.tmx map support)
 
 ## 🚀 Getting Started
-Instructions to build the project (cmake/g++)
+
+To build and run the project, make sure you have the following libraries installed:
+
+* **SDL2**
+* **SDL2\_image**
+* **tmx** (TMX map parsing)
+* **libxml2**
+* **zlib**
+
+### 🔧 Compile the Project
+
+```bash
+g++ *.cpp -lSDL2 -lSDL2_image -lxml2 -ltmx -lz -o wiz
+```
+
+### ▶️ Run the Game
+
+```bash
+./wiz
+```
 
 ## 📂 Folder Structure
 - `levels/` – Tiled maps
