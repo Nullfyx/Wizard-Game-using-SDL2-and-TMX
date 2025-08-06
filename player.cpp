@@ -250,10 +250,10 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump)
     {
 	applyForce(-1000, 0);
     }
-
+//resistance
     if (!moveLeft && !moveRight)
     {
-    	kvelocityX *= 0.9;
+    	kvelocityX *= 0.8;
 
     	if (std::abs(kvelocityX) < 0.01)
         kvelocityX = 0;

@@ -19,8 +19,8 @@ bool renderLoop(const char *path)
     Player player;
     player.setMap(map);
     string src = "sprites/wizard/wizard_idle.png";
-    string rightSrc = "sprites/wizard/wizard_move.png";
-    string leftSrc = "sprites/wizard/wizard_move.png";
+    string rightSrc = "sprites/wizard/wizard_run.png";
+    string leftSrc = "sprites/wizard/wizard_run.png";
     player.playerTexture.setFPS(30);
     int cols = 5;
     int cells = 5;
@@ -63,8 +63,17 @@ bool renderLoop(const char *path)
             {
                 if (e.key.keysym.sym == SDLK_LEFT)
                     moveLeft = true;
+		    player.setFlip(SDL_FLIP_VERTICAL); 
+		    player.playerTexture.WIMG_Load(leftSrc);
+		    player.playerTexture.setCells(4);
+		    player.playerTexture.setCols(4);
                 if (e.key.keysym.sym == SDLK_RIGHT)
                     moveRight = true;
+		    player.playerTexture.WIMG_Load(leftSrc);
+		    player.playerTexture.setCells(4);
+		    player.playerTexture.setCols(4);
+
+		    player.setFlip(SDL_FLIP_NONE);
                 if ((e.key.keysym.sym == SDLK_SPACE) && (jumpIndex < 10))
                 {
                     jumpIndex = 1;
@@ -74,6 +83,10 @@ bool renderLoop(const char *path)
 
             if (e.type == SDL_KEYUP && e.key.repeat == 0)
             {
+		player.setFlip(SDL_FLIP_NONE);
+		    player.playerTexture.WIMG_Load(src);
+		    player.playerTexture.setCells(5);
+		    player.playerTexture.setCols(5);
                 if (e.key.keysym.sym == SDLK_LEFT)
                     moveLeft = false;
                 if (e.key.keysym.sym == SDLK_RIGHT)

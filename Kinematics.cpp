@@ -43,10 +43,10 @@ void Kinematics::move()
     kvelocityY += kaccelerationY * kdt;
 
     // Cap velocities both directions
-    if (kvelocityX > 2.5)
-        kvelocityX = 2.5;
-    else if (kvelocityX < -2.5)
-        kvelocityX = -2.5;
+    if (kvelocityX > 3)
+        kvelocityX = 3;
+    else if (kvelocityX < -3)
+        kvelocityX = -3;
 
     if (kvelocityY > 3)
         kvelocityY = 3;
