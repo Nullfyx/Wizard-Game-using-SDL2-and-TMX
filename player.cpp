@@ -15,7 +15,7 @@ Player::Player()
     wYVel = wGravityVel;
     flip = SDL_FLIP_NONE;
     rotate = 0.00;
-    wJumpPower = -100; // N
+    wJumpPower = -100; // Newtons
     map = nullptr;
     jumping = false;
 };
