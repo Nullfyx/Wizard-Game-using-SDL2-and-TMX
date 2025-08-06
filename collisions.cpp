@@ -1,15 +1,16 @@
 #include "collisions.hpp"
 #include <iostream>
 #include <tmx.h>
+#include <cmath> // for fmod
 
-// Helper: Get linear tile index
+// --- Helper: Get 1D tile index ---
 int getTileIndex(tmx_map *map, int tileX, int tileY) {
     if (tileX < 0 || tileX >= (int)map->width || tileY < 0 || tileY >= (int)map->height)
         return -1;
     return tileY * map->width + tileX;
 }
 
-// Helper: Get tile from layer using tile coords
+// --- Helper: Get tile from layer by (x, y) tile position ---
 tmx_tile* getTile(tmx_map *map, tmx_layer *layer, int tileX, int tileY) {
     int index = getTileIndex(map, tileX, tileY);
     if (index < 0) return nullptr;
@@ -17,8 +18,8 @@ tmx_tile* getTile(tmx_map *map, tmx_layer *layer, int tileX, int tileY) {
     return tmx_get_tile(map, gid);
 }
 
-// Check if tile has "collidable" property
-bool isCollidable(tmx_tile *tile) {
+// --- Helper: Check if a tile has 'collidable' property ---
+bool checkCollisionsXY(tmx_tile *tile) {
     if (!tile || !tile->properties) return false;
 
     const tmx_property *prop = tmx_get_property(tile->properties, "collidable");
@@ -27,47 +28,53 @@ bool isCollidable(tmx_tile *tile) {
     if (prop->type == PT_BOOL) {
         return prop->value.boolean;
     } else if (prop->type == PT_STRING) {
-        return (std::string(prop->value.string) == "true" || prop->value.string[0] == '1');
+        std::string val = prop->value.string;
+        return val == "true" || val == "1";
     }
 
     return false;
 }
 
-// Debug print for tile status
+// --- Helper: Print collidable status ---
 void printTileCollisionStatus(const std::string &label, tmx_tile *tile) {
-    if (!tile) {
-        std::cout << label << ": tile is null.\n";
-        return;
-    }
-    std::cout << label << " collidable: " << (isCollidable(tile) ? "yes" : "no") << std::endl;
+    std::cout << label << " collidable: " << (checkCollisionsXY(tile) ? "yes" : "no") << std::endl;
 }
 
-// Your main function: Check surroundings of the player
+// --- MAIN FUNCTION: Checks for tile collisions around player ---
+
 void checkCollisionsXY(tmx_map *map, int playerX, int playerY) {
+    const int tileW = map->tile_width;
+    const int tileH = map->tile_height;
+
+    float centerX = playerX + tileW / 2.0f;
+    float centerY = playerY + tileH / 2.0f;
+
+    int tileX = static_cast<int>(centerX / tileW);
+    int tileY = static_cast<int>(centerY / tileH);
+
+    int bottomPixelY = playerY + tileH;
+    int bottomTileY = bottomPixelY / tileH;
+
+    int topPixelY = playerY;
+    int topTileY = topPixelY / tileH;
+
+    std::cout << "\n=== Collision Check ===\n";
+    std::cout << "Player top-left: (" << playerX << ", " << playerY << ")\n";
+    std::cout << "Tile at center:  (" << tileX << ", " << tileY << ")\n";
+    std::cout << "Bottom tileY:    " << bottomTileY << "\n";
+
     tmx_layer *layer = map->ly_head;
-
     while (layer) {
-        int tileX = playerX / map->tile_width;
-        int tileY = playerY / map->tile_height;
-
-        // Print player info
-        std::cout << "Checking collisions at tile (" << tileX << ", " << tileY << ")\n";
-        std::cout << "Player pixel pos: (" << playerX << ", " << playerY << ")\n";
-
-        // Get surrounding tiles
         tmx_tile *tileL = getTile(map, layer, tileX - 1, tileY);
         tmx_tile *tileR = getTile(map, layer, tileX + 1, tileY);
-        tmx_tile *tileU = getTile(map, layer, tileX, tileY - 1);
-        tmx_tile *tileD = getTile(map, layer, tileX, tileY + 1);
+        tmx_tile *tileU = getTile(map, layer, tileX, topTileY);
+        tmx_tile *tileD = getTile(map, layer, tileX, bottomTileY);
 
-        // Print their collision status
         printTileCollisionStatus("Left", tileL);
         printTileCollisionStatus("Right", tileR);
         printTileCollisionStatus("Up", tileU);
         printTileCollisionStatus("Down", tileD);
 
-        // Next layer
         layer = layer->next;
     }
 }
-
