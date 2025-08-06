@@ -20,7 +20,7 @@ Player::Player()
     jumping = false;
 };
 
-// getters and setters
+// getters and setters (all)
 int Player::width()
 {
     return wWidth;
