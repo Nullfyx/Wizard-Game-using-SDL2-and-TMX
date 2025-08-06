@@ -34,7 +34,7 @@ bool init()
     wRenderer = SDL_CreateRenderer(wWindow, -1, SDL_RENDERER_ACCELERATED);
 
     // 2x zoom:
-    SDL_RenderSetScale(wRenderer, 2.0f, 2.0f);
+    SDL_RenderSetScale(wRenderer, 4.0f, 4.0f);
 
     // if error
     if (!wWindow || !wRenderer)

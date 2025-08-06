@@ -1,4 +1,5 @@
 #include "render_loop.hpp"
+#include <SDL2/SDL_render.h>
 bool renderLoop(const char *path)
 {
     int jumpIndex = 0;
@@ -17,17 +18,18 @@ bool renderLoop(const char *path)
     // Player setup
     Player player;
     player.setMap(map);
-    string src = "sprites/wizard/wiz.png";
-    string rightSrc = "sprites/wizard/wiz_move.png";
-    string leftSrc = "sprites/wizard/wiz_move_flip.png";
-    int cols = 6;
-    int cells = 6;
+    string src = "sprites/wizard/wizard_idle.png";
+    string rightSrc = "sprites/wizard/wizard_run.png";
+    string leftSrc = "sprites/wizard/wizard_run.png";
+    player.playerTexture.setFPS(30);
+    int cols = 5;
+    int cells = 5;
     player.playerTexture.WIMG_Load(src);
-    player.setWidth(32);
-    player.setHeight(32);
+    player.setWidth(16);
+    player.setHeight(16);
     player.playerTexture.setCells(cells);
     player.playerTexture.setCols(cols);
-    player.playerTexture.setFPS(60);
+    player.playerTexture.setFPS(4);
     // Timer for deltaTime tracking
     Timer frameTimer;
     frameTimer.start();
@@ -64,12 +66,21 @@ bool renderLoop(const char *path)
                     moveLeft = true;
                     player.playerTexture.WIMG_Load(leftSrc);
                 }
+		    player.setFlip(SDL_FLIP_VERTICAL); 
+		    player.playerTexture.WIMG_Load(leftSrc);
+		    player.playerTexture.setCells(4);
+		    player.playerTexture.setCols(4);
                 if (e.key.keysym.sym == SDLK_RIGHT)
                 {
                     player.playerTexture.WIMG_Load(rightSrc);
 
                     moveRight = true;
                 }
+		    player.playerTexture.WIMG_Load(leftSrc);
+		    player.playerTexture.setCells(4);
+		    player.playerTexture.setCols(4);
+
+		    player.setFlip(SDL_FLIP_NONE);
                 if ((e.key.keysym.sym == SDLK_SPACE) && (jumpIndex < 10))
                 {
                     jumpIndex = 1;
@@ -79,6 +90,10 @@ bool renderLoop(const char *path)
 
             if (e.type == SDL_KEYUP && e.key.repeat == 0)
             {
+		player.setFlip(SDL_FLIP_NONE);
+		    player.playerTexture.WIMG_Load(src);
+		    player.playerTexture.setCells(5);
+		    player.playerTexture.setCols(5);
                 if (e.key.keysym.sym == SDLK_LEFT)
                     moveLeft = false;
                 if (e.key.keysym.sym == SDLK_RIGHT)
@@ -113,8 +128,8 @@ bool renderLoop(const char *path)
         // update camera
         int map_width_px = map->width * map->tile_width;
         int map_height_px = map->height * map->tile_height;
-        float scale = 2.0f;
-        // Compute scaled screen dimensions
+        float scale = 4.0f;
+        // Compute scaled screen dimiensions
         int scaledScreenWidth = SCREEN_WIDTH / scale;
         int scaledScreenHeight = SCREEN_HEIGHT / scale;
 

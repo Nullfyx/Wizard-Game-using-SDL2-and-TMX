@@ -94,10 +94,12 @@ void draw_tile(void *image, unsigned int sx, unsigned int sy, unsigned int sw, u
     SDL_Rect src_rect, dest_rect;
     src_rect.x = sx;
     src_rect.y = sy;
-    src_rect.w = dest_rect.w = sw;
-    src_rect.h = dest_rect.h = sh;
-    dest_rect.x = dx - camera.x;
-    dest_rect.y = dy - camera.y;
+    src_rect.w =sw;
+    src_rect.h = sh;
+    dest_rect.x = (dx - camera.x);
+    dest_rect.y = (dy - camera.y);
+    dest_rect.h = sh;
+    dest_rect.w = sw;
 
     SDL_RenderCopy(wRenderer, (SDL_Texture *)image, &src_rect, &dest_rect);
 }
@@ -131,10 +133,10 @@ void draw_objects(tmx_object_group *objgr)
         {
             if (head->obj_type == OT_SQUARE)
             {
-                rect.x = head->x - camera.x;
-                rect.y = head->y - camera.y;
-                rect.w = head->width;
-                rect.h = head->height;
+                rect.x = (head->x - camera.x)*4.0;
+                rect.y = (head->y - camera.y)*4.0;
+                rect.w = head->width * 4.0;
+                rect.h = head->height * 4.0;
                 SDL_RenderDrawRect(wRenderer, &rect);
             }
             else if (head->obj_type == OT_POLYGON)
