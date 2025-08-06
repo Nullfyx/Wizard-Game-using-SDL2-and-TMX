@@ -30,7 +30,7 @@ SDL_Renderer *wRenderer = NULL;
 // main function
 int main(int argv, char *args[])
 {
-    const char *pathToTMX = "levels/2.tmx";
+    const char *pathToTMX = "levels/3.tmx";
     // initialize
     if (!init())
     {

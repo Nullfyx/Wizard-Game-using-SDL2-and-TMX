@@ -36,13 +36,15 @@ bool checkCollisionsXY(tmx_tile *tile) {
 }
 
 // --- Helper: Print collidable status ---
-void printTileCollisionStatus(const std::string &label, tmx_tile *tile) {
+void setTileCollisionStatus(const std::string &label, tmx_tile *tile) {
     std::cout << label << " collidable: " << (checkCollisionsXY(tile) ? "yes" : "no") << std::endl;
 }
 
 // --- MAIN FUNCTION: Checks for tile collisions around player ---
 
-void checkCollisionsXY(tmx_map *map, int playerX, int playerY) {
+void checkCollisionsXY(tmx_map *map, int playerX, int playerY,
+                       bool &floorCollision, bool &leftWallCollision,
+                       bool &rightWallCollision, bool &ceilingCollision, bool &overlapping) {
     const int tileW = map->tile_width;
     const int tileH = map->tile_height;
 
@@ -58,23 +60,59 @@ void checkCollisionsXY(tmx_map *map, int playerX, int playerY) {
     int topPixelY = playerY;
     int topTileY = topPixelY / tileH;
 
+    int rightPixelX = playerX + tileW;
+    int rightTileX = rightPixelX / tileW;
+
+    int leftTileX = playerX / tileW;
+
     std::cout << "\n=== Collision Check ===\n";
     std::cout << "Player top-left: (" << playerX << ", " << playerY << ")\n";
     std::cout << "Tile at center:  (" << tileX << ", " << tileY << ")\n";
     std::cout << "Bottom tileY:    " << bottomTileY << "\n";
 
+    floorCollision = false;
+    leftWallCollision = false;
+    rightWallCollision = false;
+    ceilingCollision = false;
+
     tmx_layer *layer = map->ly_head;
     while (layer) {
-        tmx_tile *tileL = getTile(map, layer, tileX - 1, tileY);
-        tmx_tile *tileR = getTile(map, layer, tileX + 1, tileY);
-        tmx_tile *tileU = getTile(map, layer, tileX, topTileY);
-        tmx_tile *tileD = getTile(map, layer, tileX, bottomTileY);
+        // LEFT WALL: Only if player's left side is actually in the tile
+        if (playerX % tileW != 0) {
+            tmx_tile *tileL = getTile(map, layer, leftTileX, tileY);
+            setTileCollisionStatus("Left", tileL);
+            if (checkCollisionsXY(tileL)) leftWallCollision = true;
+        }
 
-        printTileCollisionStatus("Left", tileL);
-        printTileCollisionStatus("Right", tileR);
-        printTileCollisionStatus("Up", tileU);
-        printTileCollisionStatus("Down", tileD);
+        // RIGHT WALL: Only if player's right side is in the next tile
+        if (rightPixelX % tileW != 0) {
+            tmx_tile *tileR = getTile(map, layer, rightTileX, tileY);
+            setTileCollisionStatus("Right", tileR);
+            if (checkCollisionsXY(tileR)) rightWallCollision = true;
+        }
+
+        // FLOOR
+        tmx_tile *tileD = getTile(map, layer, tileX, bottomTileY);
+        setTileCollisionStatus("Down", tileD);
+        if (checkCollisionsXY(tileD)) floorCollision = true;
+
+        // CEILING
+        tmx_tile *tileU = getTile(map, layer, tileX, topTileY);
+        setTileCollisionStatus("Up", tileU);
+        if (checkCollisionsXY(tileU)) ceilingCollision = true;
+	
+	if (floorCollision) {
+ 	   // How far the bottom of the player is into the next tile (vertical overlap)
+    	float bottomOverlap = fmod(playerY + tileH, tileH);
+    
+   	 // If there's a visible overlap into the solid tile (e.g., more than 1 pixel)
+    	if (bottomOverlap > 1.0f) {
+        	overlapping = true;
+       		 std::cout << "Player is sinking into the floor by " << bottomOverlap << " pixels.\n";
+    }
+}
 
         layer = layer->next;
     }
 }
+
