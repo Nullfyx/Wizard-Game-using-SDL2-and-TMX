@@ -216,6 +216,8 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump)
     cout << "isGrounded (before move): " << isGrounded << endl;
     cout << "moveleft: " << moveLeft << ", moveRight: " << moveRight << ", jump: " << jump << endl;
 
+    checkCollisionsXY(map, kxPos, kyPos);
+
     // Movement inputs
     if (moveLeft && !moveRight)
         applyForce(-1000, 0);

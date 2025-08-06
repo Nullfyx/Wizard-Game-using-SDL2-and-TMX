@@ -23,8 +23,8 @@ bool renderLoop(const char *path)
     int cols = 6;
     int cells = 6;
     player.playerTexture.WIMG_Load(src);
-    player.setWidth(64);
-    player.setHeight(64);
+    player.setWidth(32);
+    player.setHeight(32);
     player.playerTexture.setCells(cells);
     player.playerTexture.setCols(cols);
     player.playerTexture.setFPS(60);

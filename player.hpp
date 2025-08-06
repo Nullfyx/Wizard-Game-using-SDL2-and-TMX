@@ -7,6 +7,7 @@
 #include "texture.hpp"
 #include "timer.hpp"
 #include <tmx.h>
+#include "collisions.hpp"
 #include "Kinematics.hpp"
 using namespace std;
 
