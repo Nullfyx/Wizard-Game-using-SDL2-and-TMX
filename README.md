@@ -10,9 +10,9 @@ No Unity. No Unreal. Just raw code, physics, collisions, and tiled maps.
 - Custom game loop
 
 ## 📸 Screenshots
-<br/>
-<img width="987" height="736" alt="image" src="https://github.com/user-attachments/assets/57c22724-4934-46ea-a400-8c808a5f029f" />
-<br/>
+
+https://github.com/user-attachments/assets/aac3d224-7061-4fb8-8478-26b0844867d0
+
 ## 🛠️ Built With
 - C++
 - SDL2
