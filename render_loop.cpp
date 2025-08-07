@@ -1,4 +1,5 @@
 #include "render_loop.hpp"
+#include "globals.hpp"
 #include <SDL2/SDL_render.h>
 bool renderLoop(const char *path)
 {
@@ -157,8 +158,17 @@ bool renderLoop(const char *path)
         // Update game logic
         player.update(deltaTime);
         // Rendering
-        SDL_SetRenderDrawColor(wRenderer, 100, 0, 150, 255);
-        SDL_RenderClear(wRenderer);
+	SDL_Texture* backgroundTex = IMG_LoadTexture(wRenderer, "bg.png");
+
+int bgTexW, bgTexH;
+SDL_QueryTexture(backgroundTex, NULL, NULL, &bgTexW, &bgTexH);
+
+// Maintain aspect ratio if you want (optional)
+int finalBgWidth = (int)(bgTexW * 0.7);  // scaled width to match screen height
+
+SDL_Rect bgRect = {-camera.x/2, camera.y/2, finalBgWidth, SCREEN_HEIGHT};
+
+SDL_RenderCopy(wRenderer, backgroundTex, nullptr, &bgRect);
         render_map(map);
         player.moveRender(moveRight, moveLeft, jump);
         SDL_RenderPresent(wRenderer);

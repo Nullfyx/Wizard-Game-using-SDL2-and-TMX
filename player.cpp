@@ -210,33 +210,6 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump)
     kxPos = static_cast<double>(wXPos);
     kyPos = static_cast<double>(wYPos);
 
-<<<<<<< HEAD
-    // Movement inputs
-    if (moveLeft && !moveRight)
-        applyForce(-1000, 0);
-    else if (moveRight && !moveLeft)
-        applyForce(1000, 0);
-    if (isGrounded)
-    {
-        if (abs(kvelocityX) > 0.1f)
-            kvelocityX *= 0.9f;
-        else
-            kvelocityX = 0;
-    }
-    if (isGrounded && !moveLeft && !moveRight)
-    {
-        kvelocityX = 0;
-        kaccelerationX = 0;
-    }
-
-    // Jumping
-    if (jump && isGrounded)
-        applyForce(0, -4000);
-
-    // Apply gravity if airborne
-    if (!isGrounded)
-        applyForce(0, kmass * kgravityConstant);
-=======
     // Input debug
     cout << "k " << kxPos << " " << kyPos << endl;
     cout << "p " << wXPos << " " << wYPos << endl;
@@ -245,7 +218,6 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump)
 
     bool onGround = false, wallLeft = false, wallRight = false, onCeiling = false, overlapping = false;
     checkCollisionsXY(map, kxPos, kyPos, onGround, wallLeft, wallRight, onCeiling, overlapping );
->>>>>>> improve_the_kinematics
 
     // Apply forces to update kPos
     //apply gravity
@@ -281,7 +253,7 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump)
 //resistance
     if (!moveLeft && !moveRight)
     {
-    	kvelocityX *= 0.8;
+    	kvelocityX *= 0.6;
 
     	if (std::abs(kvelocityX) < 0.01)
         kvelocityX = 0;
@@ -305,94 +277,6 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump)
 	applyForce(0, 3000);    
     }
     move();
-
-<<<<<<< HEAD
-    // After moving, update tile collision & grounding
-    bool touchingGround = isTileCollidableY();
-    bool touchingWall = isTileCollidableX();
-
-    // If jumping and hit a ceiling
-    if (jumping && isTileCollidableX() && kvelocityY < 0)
-    {
-        kvelocityY = 0;
-        kaccelerationY = 0;
-        jumping = false;
-    }
-
-    // Snap to tile if landing
-    if (touchingGround && !jumping)
-    {
-        isGrounded = true;
-        kvelocityY = 0;
-        kaccelerationY = 0;
-        // int tileY = (kyPos + wHeight) / map->tile_height;
-        // kyPos = tileY * map->tile_height - wHeight;
-        // Check if player overlaps the tile vertically
-        int bottomY = kyPos + wHeight;
-        int tileY = bottomY / map->tile_height;
-        int tileTop = tileY * map->tile_height;
-
-        int overlapY = bottomY - tileTop;
-
-        if (touchingGround && !jumping && overlapY > 0 && overlapY <= map->tile_height)
-        {
-            isGrounded = true;
-            kvelocityY = 0;
-            kaccelerationY = 0;
-
-            // Snap Y pos exactly to the top of the tile
-            kyPos -= overlapY; // pull player up by overlap
-        }
-    }
-
-    else if (jumping && touchingGround && !isGrounded)
-    {
-        jumping = false;
-        isGrounded = true;
-    }
-    else if (!touchingGround)
-    {
-        isGrounded = false;
-    }
-
-    if (touchingWall)
-    {
-        // Determine overlap
-        int tileW = map->tile_width;
-        int tileX = kxPos / tileW;
-        int tileRightX = (kxPos + wWidth) / tileW;
-
-        if (kvelocityX > 0)
-        {
-            float overlap = (kxPos + wWidth) - tileRightX * tileW;
-            cout << "overlap: " << overlap << endl;
-
-            if (overlap > 0)
-            {
-                applyForce(-overlap * 5, 0);
-                kxPos -= overlap;
-            }
-        }
-        else if (kvelocityX < 0)
-        {
-            float overlap = tileX * tileW - kxPos;
-            cout << "overlap: " << overlap << endl;
-            if (overlap > 0)
-            {
-                applyForce(-overlap * 5, 0);
-                kxPos += overlap;
-            }
-        }
-
-        if (fabs(kvelocityX) < 1.0f)
-        {
-            kvelocityX = 0;
-            kaccelerationX = 0;
-        }
-    }
-
-=======
->>>>>>> improve_the_kinematics
     // Update rect based on kPos
     playerRect.x = static_cast<int>(kxPos);
     playerRect.y = static_cast<int>(kyPos);
