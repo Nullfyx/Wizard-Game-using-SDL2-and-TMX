@@ -41,6 +41,8 @@ void Kinematics::move()
 
     kvelocityX += kaccelerationX * kdt;
     kvelocityY += kaccelerationY * kdt;
+    playerVelX = kvelocityX;
+    playerVelY = kvelocityY;
 
     // Cap velocities both directions
     if (kvelocityX > 3)

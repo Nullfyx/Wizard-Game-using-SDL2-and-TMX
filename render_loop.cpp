@@ -1,4 +1,5 @@
 #include "render_loop.hpp"
+#include "globals.hpp"
 #include <SDL2/SDL_render.h>
 bool renderLoop(const char *path)
 {
@@ -62,13 +63,20 @@ bool renderLoop(const char *path)
             if (e.type == SDL_KEYDOWN && e.key.repeat == 0)
             {
                 if (e.key.keysym.sym == SDLK_LEFT)
+                {
                     moveLeft = true;
+                    player.playerTexture.WIMG_Load(leftSrc);
+                }
 		    player.setFlip(SDL_FLIP_VERTICAL); 
 		    player.playerTexture.WIMG_Load(leftSrc);
 		    player.playerTexture.setCells(4);
 		    player.playerTexture.setCols(4);
                 if (e.key.keysym.sym == SDLK_RIGHT)
+                {
+                    player.playerTexture.WIMG_Load(rightSrc);
+
                     moveRight = true;
+                }
 		    player.playerTexture.WIMG_Load(leftSrc);
 		    player.playerTexture.setCells(4);
 		    player.playerTexture.setCols(4);
@@ -150,9 +158,30 @@ bool renderLoop(const char *path)
         // Update game logic
         player.update(deltaTime);
         // Rendering
-        SDL_SetRenderDrawColor(wRenderer, 100, 0, 150, 255);
-        SDL_RenderClear(wRenderer);
+	// Load background texture once outside loop ideally, but if inside, free previous one (not shown here)
+SDL_Texture* backgroundTex = IMG_LoadTexture(wRenderer, "bg.png");
+
+int bgTexW, bgTexH;
+SDL_QueryTexture(backgroundTex, NULL, NULL, &bgTexW, &bgTexH);
+
+// Scale to fit screen height exactly
+float scaleBg = (float)SCREEN_HEIGHT / bgTexH;
+int finalBgWidth = (int)(bgTexW * scaleBg);
+int finalBgHeight = SCREEN_HEIGHT;  // exactly full screen height
+
+// Parallax effect: background moves half as fast as camera horizontally
+// Vertical position fixed at 0 so background always covers height fully
+SDL_Rect bgRect = {
+    -camera.x / 2,  // slower horizontal movement for parallax
+    0,              // fixed vertical position: no vertical offset
+    finalBgWidth,
+    finalBgHeight
+};
+
+SDL_RenderCopy(wRenderer, backgroundTex, nullptr, &bgRect);
+
         render_map(map);
+
         player.moveRender(moveRight, moveLeft, jump);
         SDL_RenderPresent(wRenderer);
 

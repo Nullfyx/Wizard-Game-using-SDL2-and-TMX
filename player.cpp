@@ -217,6 +217,7 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump)
     cout << "moveleft: " << moveLeft << ", moveRight: " << moveRight << ", jump: " << jump << endl;
 
     bool onGround = false, wallLeft = false, wallRight = false, onCeiling = false, overlapping = false;
+
     checkCollisionsXY(map, onGround, wallLeft, wallRight, onCeiling, overlapping , playerRect);
 
     // Apply forces to update kPos
@@ -225,17 +226,47 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump)
     if(onGround)
     {
 	kvelocityY = 0;
-	applyForce(0, -kgravityConstant * wWeight * dt);
+//`	applyForce(0, -kgravityConstant * wWeight * dt);
     }
     
 
+const double overlapPushSpeed = 1.0;  // pixels per frame to push player out of overlap
 
+if (overlapping) {
+    if (onGround) {
+        // Push player up by a small amount to prevent sinking
+        kyPos -= overlapPushSpeed;
+        kvelocityY = 0; // Stop downward velocity since we are pushing up
+        isGrounded = true;  // confirm grounded state
+    }
+    else if (onCeiling) {
+        // Push player down gently when overlapping ceiling
+        kyPos += overlapPushSpeed;
+        kvelocityY = 0; // stop upward velocity
+    }
+    else {
+        // Overlapping but neither on floor nor ceiling - push up as fallback
+        kyPos -= overlapPushSpeed * 0.5;
+    }
+}
+else {
+    // No overlapping
+    if (onGround) {
+        kvelocityY = 0;
+        isGrounded = true;
+    } else {
+        isGrounded = false;
+    }
+}
     if(jump && onGround)
     {
 	applyForce(0, -3500);
     }
 
-    
+if (wallRight) {
+     kvelocityX = 0;
+    kforceX = kforceX <= 0 ? kforceX : 0;
+}
 
     //apply motion
     if(moveRight)

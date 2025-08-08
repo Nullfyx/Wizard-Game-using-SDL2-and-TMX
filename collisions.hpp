@@ -4,6 +4,9 @@
 #include<iostream>
 #include<SDL2/SDL.h>
 #include <tmx.h>
+#include <vector>
+
+#include <cmath> // for fmod
 
 void checkCollisionsXY(tmx_map *map,
                        bool &floorCollision, bool &leftWallCollision,

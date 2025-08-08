@@ -27,10 +27,12 @@ const int SCREEN_HEIGHT = 700;
 // SDL Renderer
 SDL_Renderer *wRenderer = NULL;
 
+float playerVelX, playerVelY = 0.0;
+
 // main function
 int main(int argv, char *args[])
 {
-    const char *pathToTMX = "levels/3.tmx";
+    const char *pathToTMX = "levels/2.tmx";
     // initialize
     if (!init())
     {
