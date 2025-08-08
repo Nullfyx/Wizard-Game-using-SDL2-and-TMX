@@ -15,12 +15,12 @@ Player::Player()
     wYVel = wGravityVel;
     flip = SDL_FLIP_NONE;
     rotate = 0.00;
-    wJumpPower = -100; // N
+    wJumpPower = -100; // Newtons
     map = nullptr;
     jumping = false;
 };
 
-// getters and setters
+// getters and setters (all)
 int Player::width()
 {
     return wWidth;
@@ -217,7 +217,7 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump)
     cout << "moveleft: " << moveLeft << ", moveRight: " << moveRight << ", jump: " << jump << endl;
 
     bool onGround = false, wallLeft = false, wallRight = false, onCeiling = false, overlapping = false;
-    checkCollisionsXY(map, kxPos, kyPos, onGround, wallLeft, wallRight, onCeiling, overlapping );
+    checkCollisionsXY(map, onGround, wallLeft, wallRight, onCeiling, overlapping , playerRect);
 
     // Apply forces to update kPos
     //apply gravity
@@ -228,10 +228,7 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump)
 	applyForce(0, -kgravityConstant * wWeight * dt);
     }
     
-    if(overlapping)
-    {
-	    kyPos+= 0.1;
-    }
+
 
     if(jump && onGround)
     {
@@ -253,7 +250,7 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump)
 //resistance
     if (!moveLeft && !moveRight)
     {
-    	kvelocityX *= 0.8;
+    	kvelocityX *= 0.6;
 
     	if (std::abs(kvelocityX) < 0.01)
         kvelocityX = 0;
@@ -277,7 +274,6 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump)
 	applyForce(0, 3000);    
     }
     move();
-
     // Update rect based on kPos
     playerRect.x = static_cast<int>(kxPos);
     playerRect.y = static_cast<int>(kyPos);
