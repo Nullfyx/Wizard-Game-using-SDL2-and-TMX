@@ -1,6 +1,7 @@
 #ifndef KINEMATICS_HPP
 #define KINEMATICS_HPP
 #include <iostream>
+#include "globals.hpp"
 #include <vector>
 class Kinematics
 {

@@ -171,7 +171,11 @@
    <property name="collidable" type="bool" value="true"/>
   </properties>
   <objectgroup draworder="index" id="2">
+<<<<<<< HEAD
    <object id="2" x="0.0840005" y="0.0420003" width="15.9181" height="15.9181"/>
+=======
+   <object id="3" x="0" y="0" width="16" height="16"/>
+>>>>>>> improve_the_kinematics
   </objectgroup>
  </tile>
  <tile id="34">
@@ -179,7 +183,11 @@
    <property name="collidable" type="bool" value="true"/>
   </properties>
   <objectgroup draworder="index" id="2">
+<<<<<<< HEAD
    <object id="1" x="0.0840005" y="0" width="15.8761" height="15.9181"/>
+=======
+   <object id="2" x="0" y="0" width="16" height="16"/>
+>>>>>>> improve_the_kinematics
   </objectgroup>
  </tile>
  <tile id="35">
@@ -187,7 +195,11 @@
    <property name="collidable" type="bool" value="true"/>
   </properties>
   <objectgroup draworder="index" id="2">
+<<<<<<< HEAD
    <object id="1" x="0.0420003" y="0.0420003" width="15.8761" height="15.8761"/>
+=======
+   <object id="2" x="0" y="0" width="16" height="16"/>
+>>>>>>> improve_the_kinematics
   </objectgroup>
  </tile>
  <tile id="36">

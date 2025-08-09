@@ -158,18 +158,43 @@ bool renderLoop(const char *path)
         // Update game logic
         player.update(deltaTime);
         // Rendering
+<<<<<<< HEAD
 	SDL_Texture* backgroundTex = IMG_LoadTexture(wRenderer, "bg.png");
+=======
+	// Load background texture once outside loop ideally, but if inside, free previous one (not shown here)
+SDL_Texture* backgroundTex = IMG_LoadTexture(wRenderer, "bg.png");
+>>>>>>> improve_the_kinematics
 
 int bgTexW, bgTexH;
 SDL_QueryTexture(backgroundTex, NULL, NULL, &bgTexW, &bgTexH);
 
+<<<<<<< HEAD
 // Maintain aspect ratio if you want (optional)
 int finalBgWidth = (int)(bgTexW * 0.7);  // scaled width to match screen height
 
 SDL_Rect bgRect = {-camera.x/2, camera.y/2, finalBgWidth, SCREEN_HEIGHT};
 
 SDL_RenderCopy(wRenderer, backgroundTex, nullptr, &bgRect);
+=======
+// Scale to fit screen height exactly
+float scaleBg = (float)SCREEN_HEIGHT / bgTexH;
+int finalBgWidth = (int)(bgTexW * scaleBg);
+int finalBgHeight = SCREEN_HEIGHT;  // exactly full screen height
+
+// Parallax effect: background moves half as fast as camera horizontally
+// Vertical position fixed at 0 so background always covers height fully
+SDL_Rect bgRect = {
+    -camera.x / 2,  // slower horizontal movement for parallax
+    0,              // fixed vertical position: no vertical offset
+    finalBgWidth,
+    finalBgHeight
+};
+
+SDL_RenderCopy(wRenderer, backgroundTex, nullptr, &bgRect);
+
+>>>>>>> improve_the_kinematics
         render_map(map);
+
         player.moveRender(moveRight, moveLeft, jump);
         SDL_RenderPresent(wRenderer);
 
