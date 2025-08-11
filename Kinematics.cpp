@@ -1,3 +1,4 @@
+
 #include "Kinematics.hpp"
 
 Kinematics::Kinematics()
@@ -14,6 +15,9 @@ Kinematics::Kinematics()
     kforceY = 0;
     kaccelerationY = kgravityConstant;
     positions = {0, 0};
+    passThisFrameNegX = false;
+    passThisFrameY = false;
+    passThisFramePosX = false;
 }
 
 void Kinematics::applyForce(double fX, double fY)
@@ -23,45 +27,49 @@ void Kinematics::applyForce(double fX, double fY)
 }
 void Kinematics::move()
 {
-    std::cout << "kmass: " << kmass
-              << ", kaccelerationX: " << kaccelerationX
-              << ", kaccelerationY: " << kaccelerationY
-              << ", kvelocityX: " << kvelocityX
-              << ", kvelocityY: " << kvelocityY
-              << ", kgravityConstant: " << kgravityConstant
-              << ", kfps: " << kfps
-              << ", kdt: " << kdt
-              << ", positions: [" << kxPos << ", " << kyPos << "]"
-              << ", kforceX: " << kforceX
-              << ", kforceY: " << kforceY
-              << std::endl;
+    // Acceleration
+    kaccelerationX = kforceX / kmass;
+    kaccelerationY = kforceY / kmass;
 
-    kaccelerationX = (kforceX) / kmass;
-    kaccelerationY = (kforceY) / kmass;
-
+    // Velocity update
     kvelocityX += kaccelerationX * kdt;
     kvelocityY += kaccelerationY * kdt;
+
     playerVelX = kvelocityX;
     playerVelY = kvelocityY;
 
-    // Cap velocities both directions
-    if (kvelocityX > 3)
-        kvelocityX = 3;
-    else if (kvelocityX < -3)
-        kvelocityX = -3;
+    // Cap X velocity
+    if (kvelocityX > 3)  kvelocityX = 3;
+    if (kvelocityX < -3) kvelocityX = -3;
 
-    if (kvelocityY > 3)
-        kvelocityY = 3;
-    else if (kvelocityY < -60)
-        kvelocityY = -60;
+    // Y movement (pause downward only if grounded)
+    if (!passThisFrameY) {
+        if (kvelocityY > 3)  kvelocityY = 3;
+        if (kvelocityY < -60) kvelocityY = -60;
+        kyPos += kvelocityY;
+    } else {
+        if (kvelocityY > 0) {
+            kvelocityY = 0; // stop falling
+        } else {
+            kyPos += kvelocityY; // allow jump/upward
+        }
+    }
 
-    kxPos += kvelocityX;
-    kyPos += kvelocityY;
+    // X movement (pause depending on wall side)
+    if (passThisFramePosX && kvelocityX > 0) {
+        kvelocityX = 0; // stop moving right
+    } 
+    else if (passThisFrameNegX && kvelocityX < 0) {
+        kvelocityX = 0; // stop moving left
+    } 
+    else {
+        kxPos += kvelocityX;
+    }
 
     // Reset forces for next frame
     kforceX = 0;
     kforceY = 0;
 
-    positions[0] = static_cast<double>(kxPos);
-    positions[1] = static_cast<double>(kyPos);
+    positions[0] = kxPos;
+    positions[1] = kyPos;
 }

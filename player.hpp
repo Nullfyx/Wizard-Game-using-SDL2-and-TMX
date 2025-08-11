@@ -69,7 +69,10 @@ class Player : public Kinematics
 public:
     // constructor
     Player();
-
+    
+    bool isRoofed;
+    bool isRightObstructed;
+    bool isLeftObstructed;
     // getters and setters
     int width();
 

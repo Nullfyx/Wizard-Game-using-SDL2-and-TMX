@@ -20,7 +20,9 @@ public:
     double kyPos;
     double kforceX;
     double kforceY;
-
+bool passThisFramePosX;
+bool passThisFrameNegX;
+    bool passThisFrameY;
     void applyForce(double fX, double fY);
 
     void move();

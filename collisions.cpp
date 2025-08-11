@@ -3,7 +3,6 @@
 
 const int CORNER_OVERLAP_THRESHOLD = 4;  // For blocking corners
 const int STEP_HEIGHT = 8;               // Max step height allowed
-const int SINK_TOLERANCE = 1;            // Ignore sinking ≤ 1px
 
 // --- Helper: Get 1D tile index ---
 int getTileIndex(tmx_map *map, int tileX, int tileY) {
@@ -22,18 +21,10 @@ tmx_tile* getTile(tmx_map *map, tmx_layer *layer, int tileX, int tileY) {
     return tmx_get_tile(map, gid);
 }
 
-// Helper: vertical overlap
-int verticalOverlap(const SDL_Rect& a, const SDL_Rect& b) {
-    int top = std::max(a.y, b.y);
-    int bottom = std::min(a.y + a.h, b.y + b.h);
-    return std::max(0, bottom - top);
-}
-
-// Checks tile collision + draws debug boxes
+// Checks tile collision
 bool checkTileCollision(tmx_tile *tile, SDL_Rect &testRect,
                         int tilePixelX, int tilePixelY,
                         int tileW, int tileH) {
-    
     if (!tile) return false;
 
     tmx_object *obj = tile->collision;
@@ -43,14 +34,6 @@ bool checkTileCollision(tmx_tile *tile, SDL_Rect &testRect,
             tilePixelY + (int)obj->y,
             (int)obj->width,
             (int)obj->height
-        };
-
-        // Red box: actual colliders
-        SDL_Rect drawRect = {
-            objRect.x - camera.x,
-            objRect.y - camera.y,
-            objRect.w,
-            objRect.h
         };
 
         if (SDL_HasIntersection(&testRect, &objRect)) {
@@ -72,11 +55,7 @@ void checkCollisionsXY(tmx_map *map,
 
     floorCollision = leftWallCollision = rightWallCollision = ceilingCollision = overlapping = false;
 
-    // Predict future position
-    SDL_Rect futureRect = playerRect;
-    futureRect.x += (int)playerVelX;
-    futureRect.y += (int)playerVelY;
-
+    // Solid tile check lambda
     auto isSolidAt = [&](int tx, int ty, SDL_Rect &testRect) {
         tmx_layer *layer = map->ly_head;
         while (layer) {
@@ -90,76 +69,64 @@ void checkCollisionsXY(tmx_map *map,
         return false;
     };
 
-    // FOOT RECT (for horizontal checks)
-    SDL_Rect footRect = futureRect;
-    footRect.y = futureRect.y + futureRect.h - STEP_HEIGHT;
-    footRect.h = STEP_HEIGHT;
+    // --- LEFT wall (1 pixel lookahead) ---
+    {
+        SDL_Rect checkRect = playerRect;
+        checkRect.x -= 1;
+        int tileX = checkRect.x / tileW;
 
-    // --- LEFT wall ---
-    if (playerVelX < 0) {
-        int tileX = futureRect.x / tileW;
-        for (int y = 0; y < footRect.h; ++y) {
-            int tileY = (footRect.y + y) / tileH;
-            if (isSolidAt(tileX, tileY, futureRect)) {
-                SDL_Rect tileRect = { tileX * tileW, tileY * tileH, tileW, tileH };
-
-                int vOverlap = verticalOverlap(futureRect, tileRect);
-
-                // Step tolerance
-                int stepHeight = tileRect.y - (futureRect.y + futureRect.h);
-                if (stepHeight >= -STEP_HEIGHT && stepHeight <= 0) continue;
-
-                // Ignore tiny sinks
-                if (vOverlap <= SINK_TOLERANCE) continue;
-
-                if (vOverlap > CORNER_OVERLAP_THRESHOLD) {
-                    leftWallCollision = true;
-                    break;
-                }
+        int probeYs[] = { checkRect.y, checkRect.y + checkRect.h / 2, checkRect.y + checkRect.h - 1 };
+        for (int i = 0; i < 3; ++i) {
+            int tileY = probeYs[i] / tileH;
+            if (isSolidAt(tileX, tileY, checkRect)) {
+                leftWallCollision = true;
+                break;
             }
         }
     }
 
-    // --- RIGHT wall ---
-    if (playerVelX > 0) {
-        int tileX = (futureRect.x + futureRect.w - 1) / tileW;
-        for (int y = 0; y < footRect.h; ++y) {
-            int tileY = (footRect.y + y) / tileH;
-            if (isSolidAt(tileX, tileY, futureRect)) {
-                SDL_Rect tileRect = { tileX * tileW, tileY * tileH, tileW, tileH };
+    // --- RIGHT wall (1 pixel lookahead) ---
+    {
+        SDL_Rect checkRect = playerRect;
+        checkRect.x += 1;
+        int tileX = (checkRect.x + checkRect.w - 1) / tileW;
 
-                int vOverlap = verticalOverlap(futureRect, tileRect);
-
-                int stepHeight = tileRect.y - (futureRect.y + futureRect.h);
-                if (stepHeight >= -STEP_HEIGHT && stepHeight <= 0) continue;
-
-                if (vOverlap <= SINK_TOLERANCE) continue;
-
-                if (vOverlap > CORNER_OVERLAP_THRESHOLD) {
-                    rightWallCollision = true;
-                    break;
-                }
+        int probeYs[] = { checkRect.y, checkRect.y + checkRect.h / 2, checkRect.y + checkRect.h - 1 };
+        for (int i = 0; i < 3; ++i) {
+            int tileY = probeYs[i] / tileH;
+            if (isSolidAt(tileX, tileY, checkRect)) {
+                rightWallCollision = true;
+                break;
             }
         }
     }
 
-    // --- FLOOR ---
-    if (playerVelY > 0) {
-        int testTileY = (futureRect.y + futureRect.h - 1) / tileH;
-        for (int x = 1; x < futureRect.w; x += tileW / 2) {
-            int tileX = (futureRect.x + x) / tileW;
-            if (isSolidAt(tileX, testTileY, futureRect)) {
+    // --- FLOOR (1 pixel lookahead down) ---
+    {
+        SDL_Rect checkRect = playerRect;
+        checkRect.y += 4; // one pixel below current position
+        int tileY = (checkRect.y + checkRect.h - 1) / tileH;
+
+        int probeXs[] = { checkRect.x, checkRect.x + checkRect.w / 2, checkRect.x + checkRect.w - 1 };
+        for (int i = 0; i < 3; ++i) {
+            int tileX = probeXs[i] / tileW;
+            if (isSolidAt(tileX, tileY, checkRect)) {
                 floorCollision = true;
                 break;
             }
         }
     }
-    // --- CEILING ---
-    else if (playerVelY < 0) {
-        int testTileY = futureRect.y / tileH;
-        for (int x = 1; x < futureRect.w; x += tileW / 2) {
-            int tileX = (futureRect.x + x) / tileW;
-            if (isSolidAt(tileX, testTileY, futureRect)) {
+
+    // --- CEILING (1 pixel lookahead up) ---
+    {
+        SDL_Rect checkRect = playerRect;
+        checkRect.y -= 1;
+        int tileY = checkRect.y / tileH;
+
+        int probeXs[] = { checkRect.x, checkRect.x + checkRect.w / 2, checkRect.x + checkRect.w - 1 };
+        for (int i = 0; i < 3; ++i) {
+            int tileX = probeXs[i] / tileW;
+            if (isSolidAt(tileX, tileY, checkRect)) {
                 ceilingCollision = true;
                 break;
             }
@@ -167,16 +134,18 @@ void checkCollisionsXY(tmx_map *map,
     }
 
     // --- Overlap check with current rect ---
-    int leftTileX   = playerRect.x / tileW;
-    int rightTileX  = (playerRect.x + playerRect.w - 1) / tileW;
-    int topTileY    = playerRect.y / tileH;
-    int bottomTileY = (playerRect.y + playerRect.h - 1) / tileH;
+    {
+        int leftTileX   = playerRect.x / tileW;
+        int rightTileX  = (playerRect.x + playerRect.w - 1) / tileW;
+        int topTileY    = playerRect.y / tileH;
+        int bottomTileY = (playerRect.y + playerRect.h - 1) / tileH;
 
-    for (int tx = leftTileX; tx <= rightTileX; ++tx) {
-        for (int ty = topTileY; ty <= bottomTileY; ++ty) {
-            if (isSolidAt(tx, ty, playerRect)) {
-                overlapping = true;
-                return;
+        for (int tx = leftTileX; tx <= rightTileX; ++tx) {
+            for (int ty = topTileY; ty <= bottomTileY; ++ty) {
+                if (isSolidAt(tx, ty, playerRect)) {
+                    overlapping = true;
+                    return;
+                }
             }
         }
     }
