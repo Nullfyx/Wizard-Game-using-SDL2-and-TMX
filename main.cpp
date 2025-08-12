@@ -10,29 +10,12 @@
 #include "render_loop.hpp"
 #include <tinyxml2.h>
 
-// global variables
-// SDL Window
-SDL_Window *wWindow = NULL;
-
-// SDL camera
-SDL_Rect camera = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
-
 // player
 Player player;
-
-// Screen dimensions
-const int SCREEN_WIDTH = 960;
-const int SCREEN_HEIGHT = 700;
-
-// SDL Renderer
-SDL_Renderer *wRenderer = NULL;
-
-float playerVelX, playerVelY = 0.0;
-
 // main function
 int main(int argv, char *args[])
 {
-    const char *pathToTMX = "levels/2.tmx";
+    const char *pathToTMX = "levels/5.tmx";
     // initialize
     if (!init())
     {

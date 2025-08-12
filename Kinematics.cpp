@@ -16,8 +16,10 @@ Kinematics::Kinematics()
     kaccelerationY = kgravityConstant;
     positions = {0, 0};
     passThisFrameNegX = false;
-    passThisFrameY = false;
+    passThisFrameYPos = false;
     passThisFramePosX = false;
+    passThisFrameYNeg = false;
+
 }
 
 void Kinematics::applyForce(double fX, double fY)
@@ -25,6 +27,7 @@ void Kinematics::applyForce(double fX, double fY)
     kforceX += fX;
     kforceY += fY;
 }
+
 void Kinematics::move()
 {
     // Acceleration
@@ -39,23 +42,30 @@ void Kinematics::move()
     playerVelY = kvelocityY;
 
     // Cap X velocity
-    if (kvelocityX > 3)  kvelocityX = 3;
-    if (kvelocityX < -3) kvelocityX = -3;
+    if (kvelocityX > 1)  kvelocityX = 1;
+    if (kvelocityX < -1) kvelocityX = -1;
 
-    // Y movement (pause downward only if grounded)
-    if (!passThisFrameY) {
-        if (kvelocityY > 3)  kvelocityY = 3;
+    // --- Y movement ---
+    if (!passThisFrameYPos && !passThisFrameYNeg) {
+        // No collision — normal Y movement
+        if (kvelocityY > 1)   kvelocityY = 1;
         if (kvelocityY < -60) kvelocityY = -60;
         kyPos += kvelocityY;
-    } else {
-        if (kvelocityY > 0) {
-            kvelocityY = 0; // stop falling
-        } else {
-            kyPos += kvelocityY; // allow jump/upward
-        }
+    }
+    else if (passThisFrameYPos && kvelocityY > 0) {
+        // Block downward movement
+        kvelocityY = 0;
+    }
+    else if (passThisFrameYNeg && kvelocityY < 0) {
+        // Block upward movement
+        kvelocityY = 0;
+    }
+    else {
+        // If blocking one side but moving the other way, allow movement
+        kyPos += kvelocityY;
     }
 
-    // X movement (pause depending on wall side)
+    // --- X movement ---
     if (passThisFramePosX && kvelocityX > 0) {
         kvelocityX = 0; // stop moving right
     } 

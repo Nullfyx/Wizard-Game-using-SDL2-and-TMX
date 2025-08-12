@@ -207,98 +207,102 @@ void Player::setJumping(bool j)
 }
 void Player::moveRender(bool moveRight, bool moveLeft, bool jump)
 {
-    if(passThisFrameY)
-    {
-	passThisFrameY = false;
-    }
+    // ===== RESET FRAME FLAGS =====
+    passThisFrameYPos = false;
+    passThisFrameNegX = false;
+    passThisFrameYNeg = false;
+    passThisFramePosX = false;
+
     jumping = jump;
     kdt = dt;
-    // Copy current screen position into kpos (double precision)
+
+    // Sync world positions to kinematics
     kxPos = static_cast<double>(wXPos);
     kyPos = static_cast<double>(wYPos);
-playerVelX = kvelocityX; 
-playerVelY = kvelocityY;
+    playerVelX = kvelocityX;
+    playerVelY = kvelocityY;
+
+    // ===== COLLISION DETECTION =====
     bool onGround = false, wallLeft = false, wallRight = false, onCeiling = false, overlapping = false;
-
-    checkCollisionsXY(map, onGround, wallLeft, wallRight, onCeiling, overlapping , playerRect);
-     cout << "WallLeft: " << wallLeft << endl;
-     cout << "onGround: " << onGround << endl;
-    //apply gravity
-    if(!isGrounded)
-    {
-	applyForce(0, (wWeight * kgravityConstant * dt));
-    }
-    else{
-    	kaccelerationY = 0;
-	kvelocityY = kvelocityY > 0 ? 0 : kvelocityY;
-	passThisFrameY = true;
+    checkCollisionsXY(map, onGround, wallLeft, wallRight, onCeiling, overlapping, playerRect);
+kvelocityY = playerVelY;
+kvelocityX = playerVelX;
+    // ===== GRAVITY =====
+    if (!onGround) {
+        applyForce(0, (wWeight * kgravityConstant * dt)); // pull down
+    } else {
+        if (kvelocityY > 0) { // only stop downward movement
+            kvelocityY = 0;
+            passThisFrameYPos = true; 
+        }
     }
 
-    //move left / right
-    if(moveLeft)
-    {
-	applyForce(-1000, 0);
+    // ===== INPUT FORCES =====
+    if (moveLeft) {
+        applyForce(-100, 0);
     }
-    else if(moveRight)
-    {
-	applyForce(1000, 0);
+    if (moveRight) {
+        applyForce(100, 0);
     }
-
-    //jump
-    if(jump)
-    {
-	applyForce(0, -800);
+    if (jump && onGround) {
+        applyForce(0, -130000 * dt); // instant upward push
     }
 
-    //friction 
-    if(!(moveLeft || moveRight))
-    {
-	if(kvelocityX != 0)
-	{
-	    kvelocityX *= 0.85;
-	}
-	if(kvelocityX < -0.3)
-	{
-	    kvelocityX = 0;
-	}
+    // ===== FRICTION =====
+    if (!(moveLeft || moveRight)) {
+        if (std::abs(kvelocityX) > 0.3) {
+            kvelocityX *= 0.85;
+        } else {
+            kvelocityX = 0;
+        }
     }
-    //prevent unusual tunneling into blocks
-if (wallRight) {
-    kvelocityX     = kvelocityX > 0 ? 0 : kvelocityX;
-    kaccelerationX = kaccelerationX > 0 ? 0 : kaccelerationX;
-    kforceX        = kforceX > 0 ? 0 : kforceX;
-}
 
-if (wallLeft) {
-    kvelocityX     = kvelocityX < 0 ? 0 : kvelocityX;
-    kaccelerationX = kaccelerationX < 0 ? 0 : kaccelerationX;
-    kforceX        = kforceX < 0 ? 0 : kforceX;
-}
+    // ===== PREVENT TUNNELING =====
+    if (wallRight) {
+        kvelocityX     = kvelocityX > 0 ? 0 : kvelocityX;
+        kaccelerationX = kaccelerationX > 0 ? 0 : kaccelerationX;
+        kforceX        = kforceX > 0 ? 0 : kforceX;
+        passThisFramePosX = true;
+    }
+    if (wallLeft) {
+        kvelocityX     = kvelocityX < 0 ? 0 : kvelocityX;
+        kaccelerationX = kaccelerationX < 0 ? 0 : kaccelerationX;
+        kforceX        = kforceX < 0 ? 0 : kforceX;
+        passThisFrameNegX = true;
+    }
+    if (onCeiling) {
+        if (kvelocityY < 0) { // only stop upward motion
+            kvelocityY = 0;
+            passThisFrameYNeg = true;
+        }
+    }
+
+    // ===== PHYSICS MOVE =====
     move();
 
+    // ===== UPDATE STATE =====
     isGrounded = onGround;
     isRoofed = onCeiling;
-    // Update rect based on kPos
+
+    // ===== UPDATE COLLIDER =====
     playerRect.x = static_cast<int>(kxPos);
     playerRect.y = static_cast<int>(kyPos);
     playerRect.w = wWidth;
     playerRect.h = wHeight;
 
-    // Update world int pos
+    // Update integer positions
     wXPos = playerRect.x;
     wYPos = playerRect.y;
 
-    // Adjust for camera
+    // ===== RENDER =====
+    SDL_Rect screenRect = { 
+        static_cast<int>(playerRect.x - camera.x),
+        static_cast<int>(playerRect.y - camera.y),
+        playerRect.w,
+        playerRect.h
+    };
 
-     SDL_Rect screenRect = { 
-        (int)((playerRect.x - camera.x)),
-        (int)((playerRect.y - camera.y)),
-        (int)(playerRect.w),
-  	(int)(playerRect.h)
-};
-    // Animate and draw
     playerTexture.animateSprite(wRenderer, playerTexture.getCols(), playerTexture.getCells(), screenRect, rotate, NULL, flip);
-    SDL_RenderDrawRect(wRenderer, &screenRect);
 }
 
 void Player::update(float d)

@@ -1,5 +1,6 @@
 
 #include "collisions.hpp"
+#include "globals.hpp"
 
 const int CORNER_OVERLAP_THRESHOLD = 4;  // For blocking corners
 const int STEP_HEIGHT = 8;               // Max step height allowed
@@ -37,9 +38,11 @@ bool checkTileCollision(tmx_tile *tile, SDL_Rect &testRect,
         };
 
         if (SDL_HasIntersection(&testRect, &objRect)) {
-            return true;
-        }
-        obj = obj->next;
+
+    return true;
+}
+
+	obj = obj->next;
     }
     return false;
 }
@@ -104,7 +107,7 @@ void checkCollisionsXY(tmx_map *map,
     // --- FLOOR (1 pixel lookahead down) ---
     {
         SDL_Rect checkRect = playerRect;
-        checkRect.y += 4; // one pixel below current position
+        checkRect.y += 1; // one pixel below current position
         int tileY = (checkRect.y + checkRect.h - 1) / tileH;
 
         int probeXs[] = { checkRect.x, checkRect.x + checkRect.w / 2, checkRect.x + checkRect.w - 1 };
@@ -149,4 +152,4 @@ void checkCollisionsXY(tmx_map *map,
             }
         }
     }
-}
+} 

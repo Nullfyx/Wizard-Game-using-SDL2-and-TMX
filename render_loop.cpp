@@ -1,8 +1,38 @@
 
 #include "render_loop.hpp"
 #include "globals.hpp"
+#include "map.hpp"
 #include <SDL2/SDL_render.h>
+#include <SDL2/SDL_image.h>
 
+
+
+static inline void draw_moving_tile(tmx_map *map, moving_tile *m) {
+    if (!map || !m) return;
+
+    unsigned int base_gid = m->ts_firstgid + m->base_local_id;
+    tmx_tile *base_tile = tmx_get_tile(map, base_gid);
+    if (!base_tile) return;
+
+    unsigned int local_frame_id = (base_tile->animation_len > 0)
+        ? base_tile->animation[m->anim.current_frame].tile_id
+        : m->base_local_id;
+
+    unsigned int current_gid = m->ts_firstgid + local_frame_id;
+    tmx_tile *frame = tmx_get_tile(map, current_gid);
+    if (!frame) return;
+
+    tmx_tileset *ts = frame->tileset;
+    tmx_image *im = frame->image ? frame->image : ts->image;
+    void *image = im->resource_image;
+
+    unsigned int sx = frame->ul_x;
+    unsigned int sy = frame->ul_y;
+    unsigned int sw = ts->tile_width;
+    unsigned int sh = ts->tile_height;
+
+    draw_tile(image, sx, sy, sw, sh, (unsigned int)m->x, (unsigned int)m->y, 1.0f, 0);
+}
 bool renderLoop(const char *path)
 {
     int jumpIndex = 0;
@@ -11,8 +41,7 @@ bool renderLoop(const char *path)
 
     // Load map
     tmx_map *map = tmx_load(path);
-    if (!map)
-    {
+    if (!map) {
         tmx_perror("cannot load map");
         return false;
     }
@@ -24,161 +53,154 @@ bool renderLoop(const char *path)
     // Player setup
     Player player;
     player.setMap(map);
-    std::string src = "sprites/wizard/wizard_idle.png";
-    std::string rightSrc = "sprites/wizard/wizard_run.png";
-    std::string leftSrc = "sprites/wizard/wizard_run.png";
+    std::string src = "sprites/wizard/wizard2.png";
+    std::string rightSrc = "sprites/wizard/wizard2.png";
+    std::string leftSrc = "sprites/wizard/wizard2-flip.png";
 
+    // Initialize enemy moving tile (no drawing here)
+    moving_tile enemy = {0};
+    enemy.x = 200.0f;
+    enemy.y = 0.0f;
+    enemy.vx = 0.0f;
+    enemy.vy = 0.0f;
+    enemy.anim.current_frame = 0;
+    enemy.anim.time_acc = 0;
+    enemy.physics.kxPos = enemy.x;
+    enemy.physics.kyPos = enemy.y;
+    enemy.width = 16;
+    enemy.height = 16; 
+    tmx_tileset_list *tsl = map->ts_head;
+        if (tsl) {
+            enemy.ts = tsl->tileset;
+            enemy.ts_firstgid = tsl->firstgid;
+            enemy.base_local_id = 0; // local tile id
+    }
     player.playerTexture.setFPS(30);
-    int cols = 5;
-    int cells = 5;
+    int cols = 4;
+    int cells = 4;
     player.playerTexture.WIMG_Load(src);
-    player.setWidth(16);
-    player.setHeight(16);
+    player.setWidth(12);
+    player.setHeight(12);
     player.playerTexture.setCells(cells);
     player.playerTexture.setCols(cols);
     player.playerTexture.setFPS(4);
 
-    // Load background texture ONCE before main loop
+    // Load background texture once
     SDL_Texture* backgroundTex = IMG_LoadTexture(wRenderer, "bg.png");
-    if (!backgroundTex)
-    {
+    if (!backgroundTex) {
         SDL_Log("Failed to load background texture: %s", SDL_GetError());
+        tmx_map_free(map);
         return false;
     }
-
     int bgTexW, bgTexH;
     SDL_QueryTexture(backgroundTex, NULL, NULL, &bgTexW, &bgTexH);
 
     Timer frameTimer;
     frameTimer.start();
-    float deltaTime = 0.0f;
+    Uint32 lastTicks = SDL_GetTicks();
 
-    while (!quit)
-    {
+    while (!quit) {
+        Uint32 currentTicks = SDL_GetTicks();
+        float deltaTime = (currentTicks - lastTicks) / 1000.0f; // seconds elapsed since last frame
+        lastTicks = currentTicks;
+
+
         // Jump logic using jumpIndex
-        if (jumpIndex > 0)
-        {
+        if (jumpIndex > 0) {
             jump = true;
-            jumpIndex = (jumpIndex + 1) % 5;
-        }
-        else
-        {
+            jumpIndex = (jumpIndex + 1) % 5 * deltaTime * 5;
+        } else {
             jumpIndex = 0;
             jump = false;
         }
 
-        deltaTime = frameTimer.getTicks() / 1000.0f;
-        frameTimer.start();
-
         // Input handling
-        while (SDL_PollEvent(&e))
-        {
+        while (SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT)
                 quit = true;
-
-            if (e.type == SDL_KEYDOWN && e.key.repeat == 0)
-            {
-                switch (e.key.keysym.sym)
-                {
+            if (e.type == SDL_KEYDOWN && e.key.repeat == 0) {
+                switch (e.key.keysym.sym) {
                 case SDLK_LEFT:
                     moveLeft = true;
                     player.playerTexture.WIMG_Load(leftSrc);
-                    player.setFlip(SDL_FLIP_HORIZONTAL);
-                    player.playerTexture.setCells(4);
-                    player.playerTexture.setCols(4);
                     break;
-
                 case SDLK_RIGHT:
                     moveRight = true;
                     player.playerTexture.WIMG_Load(rightSrc);
-                    player.setFlip(SDL_FLIP_NONE);
-                    player.playerTexture.setCells(4);
-                    player.playerTexture.setCols(4);
                     break;
-
                 case SDLK_SPACE:
-                    if (jumpIndex < 10)
-                    {
+                    if (jumpIndex < 10) {
                         jumpIndex = 1;
                         jump = true;
                     }
                     break;
                 }
             }
-
-            if (e.type == SDL_KEYUP && e.key.repeat == 0)
-            {
-                switch (e.key.keysym.sym)
-                {
+            if (e.type == SDL_KEYUP && e.key.repeat == 0) {
+                switch (e.key.keysym.sym) {
                 case SDLK_LEFT:
                     moveLeft = false;
-                    player.setFlip(SDL_FLIP_NONE);
-                    player.playerTexture.WIMG_Load(src);
-                    player.playerTexture.setCells(5);
-                    player.playerTexture.setCols(5);
                     break;
-
                 case SDLK_RIGHT:
                     moveRight = false;
-                    player.setFlip(SDL_FLIP_NONE);
+                    break;
+                default:
                     player.playerTexture.WIMG_Load(src);
-                    player.playerTexture.setCells(5);
-                    player.playerTexture.setCols(5);
                     break;
                 }
             }
         }
 
-        // Update camera
+        // Update camera position
         int map_width_px = map->width * map->tile_width;
         int map_height_px = map->height * map->tile_height;
         float scale = 4.0f;
-
         int scaledScreenWidth = SCREEN_WIDTH / scale;
         int scaledScreenHeight = SCREEN_HEIGHT / scale;
-
         if (!jump)
             camera.y = player.kyPos + player.height() / 2 - scaledScreenHeight / 2;
-
         camera.x = player.kxPos + player.width() / 2 - scaledScreenWidth / 2;
 
         // Clamp camera inside map bounds
-        if (camera.x < 0)
-            camera.x = 0;
-        if (camera.y < 0)
-            camera.y = 0;
-        if (camera.x > map_width_px - camera.w)
-            camera.x = map_width_px - camera.w;
-        if (camera.y > map_height_px - camera.h)
-            camera.y = map_height_px - camera.h;
-
+        if (camera.x < 0) camera.x = 0;
+        if (camera.y < 0) camera.y = 0;
+        if (camera.x > map_width_px - camera.w) camera.x = map_width_px - camera.w;
+        if (camera.y > map_height_px - camera.h) camera.y = map_height_px - camera.h;
         camera.w = scaledScreenWidth;
         camera.h = scaledScreenHeight;
 
-        // Update game logic
+        // Updates
+	enemy.enemyUpdate(deltaTime, map);
+        // Update player logic
         player.update(deltaTime);
 
-        // Background rendering - full height, parallax horizontally
-        float scaleBg = (float)SCREEN_HEIGHT / bgTexH;
-        int finalBgWidth = (int)(bgTexW * scaleBg);
-        int finalBgHeight = SCREEN_HEIGHT;
+        // Background parallax
+        float zoomOutFactor = 15.0f;
+        float parallaxFactor = 10.0f;
+        int areaW = (int)(SCREEN_WIDTH / scale * zoomOutFactor);
+        int areaH = (int)(SCREEN_HEIGHT / scale * zoomOutFactor);
+        SDL_Rect bgSrcRect;
+        bgSrcRect.w = areaW;
+        bgSrcRect.h = areaH;
+        bgSrcRect.x = (int)((player.xPos() * parallaxFactor) - (areaW - (SCREEN_WIDTH / scale)) / 2);
+        bgSrcRect.y = (int)((player.yPos() * parallaxFactor) - (areaH - (SCREEN_HEIGHT / scale)) / 2);
+        if (bgSrcRect.x < 0) bgSrcRect.x = 0;
+        if (bgSrcRect.y < 0) bgSrcRect.y = 0;
+        if (bgSrcRect.x + areaW > bgTexW) bgSrcRect.x = bgTexW - areaW;
+        if (bgSrcRect.y + areaH > bgTexH) bgSrcRect.y = bgTexH - areaH;
+        SDL_Rect bgDstRect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+        SDL_RenderCopy(wRenderer, backgroundTex, &bgSrcRect, &bgDstRect);
 
-        SDL_Rect bgRect = {
-            -camera.x / 2,  // horizontal parallax
-            0,              // fixed vertical position for full height
-            finalBgWidth,
-            finalBgHeight
-        };
-        SDL_RenderCopy(wRenderer, backgroundTex, nullptr, &bgRect);
-
-        // Render map and player
+        // Render map and actors
         render_map(map);
+        draw_moving_tile(map, &enemy);
         player.moveRender(moveRight, moveLeft, jump);
-
+	playerX = player.kxPos;
+	playerY = player.kyPos;
         SDL_RenderPresent(wRenderer);
 
         // Cap frame rate (~60 FPS)
-        Uint32 frameTicks = frameTimer.getTicks();
+        Uint32 frameTicks = SDL_GetTicks() - currentTicks;
         if (frameTicks < 16)
             SDL_Delay(16 - frameTicks);
     }
@@ -186,6 +208,6 @@ bool renderLoop(const char *path)
     // Cleanup
     SDL_DestroyTexture(backgroundTex);
     tmx_map_free(map);
-
     return true;
 }
+

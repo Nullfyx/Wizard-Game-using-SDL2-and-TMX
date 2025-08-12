@@ -22,7 +22,8 @@ public:
     double kforceY;
 bool passThisFramePosX;
 bool passThisFrameNegX;
-    bool passThisFrameY;
+    bool passThisFrameYPos;
+    bool passThisFrameYNeg;
     void applyForce(double fX, double fY);
 
     void move();
