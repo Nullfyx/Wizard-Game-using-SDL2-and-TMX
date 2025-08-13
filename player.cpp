@@ -1,10 +1,11 @@
 #include "player.hpp"
+#include <SDL2/SDL_render.h>
 Player::Player()
 {
     wWidth = 20;
     wHeight = 20;
-    wWeight = 1000; // N
-    wMaxVel = 3;
+    wWeight = 2000; // N
+    wMaxVel = 1;
     wAtk = 10;  // weak at the begininning!
     wLives = 9; // maybe its a cat!
     wXPos = 0;
@@ -245,7 +246,7 @@ kvelocityX = playerVelX;
         applyForce(100, 0);
     }
     if (jump && onGround) {
-        applyForce(0, -130000 * dt); // instant upward push
+        applyForce(0, -230000 * dt); // instant upward push
     }
 
     // ===== FRICTION =====
@@ -276,7 +277,7 @@ kvelocityX = playerVelX;
             passThisFrameYNeg = true;
         }
     }
-
+    kmaxVel = wMaxVel;
     // ===== PHYSICS MOVE =====
     move();
 
@@ -301,7 +302,8 @@ kvelocityX = playerVelX;
         playerRect.w,
         playerRect.h
     };
-
+    SDL_RenderDrawRect(wRenderer, &screenRect);
+    SDL_RenderPresent(wRenderer);
     playerTexture.animateSprite(wRenderer, playerTexture.getCols(), playerTexture.getCells(), screenRect, rotate, NULL, flip);
 }
 

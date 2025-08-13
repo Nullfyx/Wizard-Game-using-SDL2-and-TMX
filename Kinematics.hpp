@@ -25,7 +25,7 @@ bool passThisFrameNegX;
     bool passThisFrameYPos;
     bool passThisFrameYNeg;
     void applyForce(double fX, double fY);
-
+    double kmaxVel;
     void move();
 };
 

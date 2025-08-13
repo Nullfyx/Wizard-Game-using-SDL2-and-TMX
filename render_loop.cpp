@@ -60,7 +60,7 @@ bool renderLoop(const char *path)
     // Initialize enemy moving tile (no drawing here)
     moving_tile enemy = {0};
     enemy.x = 200.0f;
-    enemy.y = 0.0f;
+    enemy.y = -1.0f;
     enemy.vx = 0.0f;
     enemy.vy = 0.0f;
     enemy.anim.current_frame = 0;
@@ -100,6 +100,7 @@ bool renderLoop(const char *path)
     Uint32 lastTicks = SDL_GetTicks();
 
     while (!quit) {
+
         Uint32 currentTicks = SDL_GetTicks();
         float deltaTime = (currentTicks - lastTicks) / 1000.0f; // seconds elapsed since last frame
         lastTicks = currentTicks;
@@ -173,25 +174,61 @@ bool renderLoop(const char *path)
 	enemy.enemyUpdate(deltaTime, map);
         // Update player logic
         player.update(deltaTime);
+        
+// --- Parallax background rendering ---
 
-        // Background parallax
-        float zoomOutFactor = 15.0f;
-        float parallaxFactor = 10.0f;
-        int areaW = (int)(SCREEN_WIDTH / scale * zoomOutFactor);
-        int areaH = (int)(SCREEN_HEIGHT / scale * zoomOutFactor);
-        SDL_Rect bgSrcRect;
-        bgSrcRect.w = areaW;
-        bgSrcRect.h = areaH;
-        bgSrcRect.x = (int)((player.xPos() * parallaxFactor) - (areaW - (SCREEN_WIDTH / scale)) / 2);
-        bgSrcRect.y = (int)((player.yPos() * parallaxFactor) - (areaH - (SCREEN_HEIGHT / scale)) / 2);
-        if (bgSrcRect.x < 0) bgSrcRect.x = 0;
-        if (bgSrcRect.y < 0) bgSrcRect.y = 0;
-        if (bgSrcRect.x + areaW > bgTexW) bgSrcRect.x = bgTexW - areaW;
-        if (bgSrcRect.y + areaH > bgTexH) bgSrcRect.y = bgTexH - areaH;
-        SDL_Rect bgDstRect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+    // Parallax factor: smaller = slower movement
+    float parallaxFactorX = 0.4f;
+    float parallaxFactorY = 0.3f;
+
+    // How much of the background we want to show on screen
+    // Keep it equal to screen size to avoid stretching
+    SDL_Rect bgSrcRect;
+    bgSrcRect.w = SCREEN_WIDTH;
+    bgSrcRect.h = SCREEN_HEIGHT;
+
+    // Offset in background based on camera position
+    bgSrcRect.x = (int)(camera.x * parallaxFactorX) % bgTexW;
+    bgSrcRect.y = (int)(camera.y * parallaxFactorY) % bgTexH;
+
+    if (bgSrcRect.x < 0) bgSrcRect.x += bgTexW;
+    if (bgSrcRect.y < 0) bgSrcRect.y += bgTexH;
+
+    SDL_Rect bgDstRect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+
+    // Render background — handle wrap-around for X and Y
+    // Case 1: fits without wrap
+    if (bgSrcRect.x + bgSrcRect.w <= bgTexW && bgSrcRect.y + bgSrcRect.h <= bgTexH) {
         SDL_RenderCopy(wRenderer, backgroundTex, &bgSrcRect, &bgDstRect);
+    }
+    // Case 2: Wrap horizontally or vertically
+    else {
+        // First chunk
+        SDL_Rect src1 = bgSrcRect;
+        SDL_Rect dst1 = bgDstRect;
 
-        // Render map and actors
+        // Adjust widths/heights for wrap
+        if (src1.x + src1.w > bgTexW) src1.w = bgTexW - src1.x;
+        if (src1.y + src1.h > bgTexH) src1.h = bgTexH - src1.y;
+
+        SDL_RenderCopy(wRenderer, backgroundTex, &src1, &dst1);
+
+        // Second chunk (horizontal wrap)
+        if (bgSrcRect.x + bgSrcRect.w > bgTexW) {
+            SDL_Rect src2 = { 0, bgSrcRect.y, bgSrcRect.w - src1.w, src1.h };
+            SDL_Rect dst2 = { src1.w, 0, dst1.w - src1.w, dst1.h };
+            SDL_RenderCopy(wRenderer, backgroundTex, &src2, &dst2);
+        }
+
+        // Second chunk (vertical wrap)
+        if (bgSrcRect.y + bgSrcRect.h > bgTexH) {
+            SDL_Rect src3 = { bgSrcRect.x, 0, src1.w, bgSrcRect.h - src1.h };
+            SDL_Rect dst3 = { 0, src1.h, dst1.w, dst1.h - src1.h };
+            SDL_RenderCopy(wRenderer, backgroundTex, &src3, &dst3);
+        }
+    }
+
+	// Render map and actors
         render_map(map);
         draw_moving_tile(map, &enemy);
         player.moveRender(moveRight, moveLeft, jump);

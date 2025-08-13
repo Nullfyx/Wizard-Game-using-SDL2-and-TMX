@@ -98,12 +98,14 @@
   <image source="sprites/blocks2/bloop.png" width="16" height="16"/>
   <objectgroup draworder="index" id="2">
    <object id="1" x="12" y="12" width="4" height="4"/>
+   <object id="2" x="12" y="12" width="4" height="4"/>
   </objectgroup>
  </tile>
  <tile id="14">
   <image source="sprites/blocks2/bloopt.png" width="16" height="16"/>
   <objectgroup draworder="index" id="2">
    <object id="1" x="0" y="12" width="4" height="4"/>
+   <object id="2" x="0" y="12" width="4" height="4"/>
   </objectgroup>
  </tile>
 </tileset>

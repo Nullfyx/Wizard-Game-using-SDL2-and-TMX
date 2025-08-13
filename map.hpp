@@ -31,12 +31,17 @@ typedef struct {
     unsigned int base_local_id;// base local tile id in the tileset (the tile holding animation)
 			       //
     Kinematics physics;
-    void enemyUpdate(float deltaTime, tmx_map* map);
     void update();
+    void enemyUpdate(float deltaTime, tmx_map* map);
     void move(unsigned int dt_ms, tmx_map *map);
     int height;
     int width;
+    int jumpFrames = 0; // how many frames jump stays active after triggering
     SDL_Rect rect = {(int)x,(int) y, width, height};
+     void stopRightMovement();
+     void stopUpwardMovement();
+     void stopLeftMovement();
+     int patrolDir = 0;
 } moving_tile;
 
 // Core render functions
@@ -62,6 +67,7 @@ static inline void draw_moving_tile(tmx_map *map, moving_tile *m);
 
 // Anim states storage for map-used gids
 extern anim_state animStates[MAX_TILES];
+
 
 #endif
 

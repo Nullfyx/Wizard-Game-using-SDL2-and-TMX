@@ -19,7 +19,7 @@ Kinematics::Kinematics()
     passThisFrameYPos = false;
     passThisFramePosX = false;
     passThisFrameYNeg = false;
-
+    kmaxVel = 3;
 }
 
 void Kinematics::applyForce(double fX, double fY)
@@ -42,14 +42,14 @@ void Kinematics::move()
     playerVelY = kvelocityY;
 
     // Cap X velocity
-    if (kvelocityX > 1)  kvelocityX = 1;
-    if (kvelocityX < -1) kvelocityX = -1;
+    if (kvelocityX > kmaxVel)  kvelocityX = kmaxVel;
+    if (kvelocityX < -kmaxVel) kvelocityX = -kmaxVel;
 
     // --- Y movement ---
     if (!passThisFrameYPos && !passThisFrameYNeg) {
         // No collision — normal Y movement
-        if (kvelocityY > 1)   kvelocityY = 1;
-        if (kvelocityY < -60) kvelocityY = -60;
+        if (kvelocityY > kmaxVel)   kvelocityY = kmaxVel;
+        if (kvelocityY < -6) kvelocityY = -6;
         kyPos += kvelocityY;
     }
     else if (passThisFrameYPos && kvelocityY > 0) {
@@ -82,4 +82,5 @@ void Kinematics::move()
 
     positions[0] = kxPos;
     positions[1] = kyPos;
+
 }
