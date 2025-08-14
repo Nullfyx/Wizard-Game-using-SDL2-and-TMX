@@ -29,13 +29,15 @@ void Kinematics::applyForce(double fX, double fY)
     kforceY += fY;
 }
 
+
 void Kinematics::move()
 {
     static double remainderX = 0.0; // persists between frames
 
     // --- Acceleration from forces ---
     kaccelerationX = kforceX / kmass;
-    kaccelerationY = kforceY / kmass; 
+    kaccelerationY = kforceY / kmass; // add gravity
+
     // --- Velocity update ---
     kvelocityX += kaccelerationX * kdt;
     kvelocityY += kaccelerationY * kdt;
@@ -50,7 +52,7 @@ void Kinematics::move()
     playerVelX = kvelocityX;
     playerVelY = kvelocityY;
 
-    // --- Y movement ---
+    // --- Y movement (preserve your original logic exactly) ---
     if (!passThisFrameYPos && !passThisFrameYNeg) {
         kyPos += kvelocityY;
     } 
@@ -72,7 +74,7 @@ void Kinematics::move()
     if (passThisFrameNegX && remainderX < 0) remainderX = 0;
 
     // Apply position if accumulated movement exceeds threshold
-    if (abs(remainderX) >= kminVelX) {
+    if (abs(remainderX) >= 0.9) {
         kxPos += remainderX;
         remainderX = 0;
     }

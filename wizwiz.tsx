@@ -3,10 +3,7 @@
  <image source="sprites/blocks3/wizwiz.png" width="320" height="320"/>
  <tile id="168">
   <objectgroup draworder="index" id="2">
-   <object id="2" x="5.04348" y="7.13043" width="10.2174" height="8.82609"/>
-   <object id="3" x="3" y="14.9565" width="2.04348" height="1.08696"/>
-   <object id="4" x="4.95652" y="5.95652" width="5.91304" height="1.13043"/>
-   <object id="5" x="13" y="3.04348" width="2.17391" height="4"/>
+   <object id="2" x="5.04348" y="7.13043" width="10.9674" height="8.82609"/>
   </objectgroup>
  </tile>
  <tile id="169">
@@ -24,11 +21,6 @@
  <tile id="171">
   <objectgroup draworder="index" id="2">
    <object id="1" x="0.0434783" y="6.91304" width="10.8696" height="9.04348"/>
-   <object id="2" x="0.0434783" y="4.04348" width="3" height="2.78261"/>
-   <object id="3" x="1.04348" y="3.08696" width="1.91304" height="0.956522"/>
-   <object id="4" x="5" y="6" width="2.04348" height="0.826087"/>
-   <object id="5" x="9.04348" y="6.04348" width="1.82609" height="0.826087"/>
-   <object id="6" x="10.913" y="15.0435" width="2" height="0.869565"/>
   </objectgroup>
  </tile>
  <tile id="188">

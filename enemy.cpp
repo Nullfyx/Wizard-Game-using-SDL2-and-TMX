@@ -206,8 +206,8 @@ void moving_tile::move(unsigned int dt_ms, tmx_map* map) {
     std::cout << "moveLeft: " << moveLeft << " moveRight: " << moveRight << " wantJump: " << wantJump << "\n";
 
     // ===== APPLY FORCES =====
-    if(moveLeft) physics.applyForce(-100, 0);
-    if(moveRight) physics.applyForce(100, 0);
+    if(moveLeft) physics.applyForce(-200, 0);
+    if(moveRight) physics.applyForce(200, 0);
     if(!onGround) physics.applyForce(0, 9800);
     else {
         physics.kvelocityY = 0;
