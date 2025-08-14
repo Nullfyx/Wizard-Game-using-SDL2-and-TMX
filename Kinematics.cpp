@@ -72,7 +72,7 @@ void Kinematics::move()
     if (passThisFrameNegX && remainderX < 0) remainderX = 0;
 
     // Apply position if accumulated movement exceeds threshold
-    if (abs(remainderX) >= 0.9) {
+    if (abs(remainderX) >= kminVelX) {
         kxPos += remainderX;
         remainderX = 0;
     }
