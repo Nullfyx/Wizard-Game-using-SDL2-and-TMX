@@ -4,6 +4,7 @@
 #include <SDL2/SDL.h>
 #include <tmx.h>
 #include "map.hpp"
+#include "mapglobal.hpp"
 #include "globals.hpp"
 #include "player.hpp" //also includes texture.hpp and timer.hpp
 using namespace std;

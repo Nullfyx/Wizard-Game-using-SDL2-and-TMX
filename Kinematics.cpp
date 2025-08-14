@@ -3,6 +3,7 @@
 
 Kinematics::Kinematics()
 {
+    kminVelX = 0;
     kgravityConstant = 9.8;
     kmass = 40;
     kxPos = 0;
@@ -30,57 +31,57 @@ void Kinematics::applyForce(double fX, double fY)
 
 void Kinematics::move()
 {
-    // Acceleration
-    kaccelerationX = kforceX / kmass;
-    kaccelerationY = kforceY / kmass;
+    static double remainderX = 0.0; // persists between frames
 
-    // Velocity update
+    // --- Acceleration from forces ---
+    kaccelerationX = kforceX / kmass;
+    kaccelerationY = kforceY / kmass; 
+    // --- Velocity update ---
     kvelocityX += kaccelerationX * kdt;
     kvelocityY += kaccelerationY * kdt;
 
+    // --- Cap velocities ---
+    if (kvelocityX > kmaxVel)  kvelocityX = kmaxVel;
+    if (kvelocityX < -kmaxVel) kvelocityX = -kmaxVel;
+    if (kvelocityY > kmaxVel)  kvelocityY = kmaxVel;
+    if (kvelocityY < -6)       kvelocityY = -6; // upward cap
+
+    // --- Store player velocity for external use ---
     playerVelX = kvelocityX;
     playerVelY = kvelocityY;
 
-    // Cap X velocity
-    if (kvelocityX > kmaxVel)  kvelocityX = kmaxVel;
-    if (kvelocityX < -kmaxVel) kvelocityX = -kmaxVel;
-
     // --- Y movement ---
     if (!passThisFrameYPos && !passThisFrameYNeg) {
-        // No collision — normal Y movement
-        if (kvelocityY > kmaxVel)   kvelocityY = kmaxVel;
-        if (kvelocityY < -6) kvelocityY = -6;
         kyPos += kvelocityY;
-    }
+    } 
     else if (passThisFrameYPos && kvelocityY > 0) {
-        // Block downward movement
-        kvelocityY = 0;
-    }
+        kvelocityY = 0; // block downward
+    } 
     else if (passThisFrameYNeg && kvelocityY < 0) {
-        // Block upward movement
-        kvelocityY = 0;
-    }
-    else {
-        // If blocking one side but moving the other way, allow movement
-        kyPos += kvelocityY;
-    }
-
-    // --- X movement ---
-    if (passThisFramePosX && kvelocityX > 0) {
-        kvelocityX = 0; // stop moving right
-    } 
-    else if (passThisFrameNegX && kvelocityX < 0) {
-        kvelocityX = 0; // stop moving left
+        kvelocityY = 0; // block upward
     } 
     else {
-        kxPos += kvelocityX;
+        kyPos += kvelocityY; // partially blocked, allow movement
     }
 
-    // Reset forces for next frame
+    // --- X movement with remainder system ---
+    remainderX += kvelocityX;
+
+    // Handle collisions
+    if (passThisFramePosX && remainderX > 0) remainderX = 0;
+    if (passThisFrameNegX && remainderX < 0) remainderX = 0;
+
+    // Apply position if accumulated movement exceeds threshold
+    if (abs(remainderX) >= 0.9) {
+        kxPos += remainderX;
+        remainderX = 0;
+    }
+
+    // --- Reset forces ---
     kforceX = 0;
     kforceY = 0;
 
+    // --- Update positions array ---
     positions[0] = kxPos;
     positions[1] = kyPos;
-
 }

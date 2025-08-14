@@ -7,6 +7,7 @@ class Kinematics
 {
 public:
     Kinematics();
+    float kminVelX;
     double kmass;
     double kaccelerationX;
     double kaccelerationY;

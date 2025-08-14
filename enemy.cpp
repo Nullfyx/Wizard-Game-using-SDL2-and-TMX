@@ -2,6 +2,7 @@
 #include "globals.hpp"
 #include <SDL2/SDL_render.h>
 #include <cmath>
+#include <cstdlib>
 #include <iostream>
 #include <queue>
 #include <vector>
@@ -124,16 +125,11 @@ while (inBounds(cx, cy) && prev[cx][cy].first != -1) {
 
 // ===================== ENEMY UPDATE =====================
 void moving_tile::update() {
-    vx = physics.kvelocityX;
+      vx = physics.kvelocityX;
     vy = physics.kvelocityY;
     x = physics.kxPos;
     y = physics.kyPos;
-
-    // Reset collision flags
-    physics.passThisFrameYPos = false;
-    physics.passThisFrameYNeg = false;
-    physics.passThisFramePosX = false;
-    physics.passThisFrameNegX = false;
+    
 }
 
 void moving_tile::enemyUpdate(float deltaTime, tmx_map* map) {
@@ -152,120 +148,127 @@ void moving_tile::enemyUpdate(float deltaTime, tmx_map* map) {
     // Move enemy with pathfinding & physics
     move(dt_ms, map);
 
-    // Sync physics for rendering/logging
-    update();
 }
 
 // ===================== ENEMY MOVEMENT =====================
-
 void moving_tile::move(unsigned int dt_ms, tmx_map* map) {
-    physics.kdt = dt_ms / 1000.0f;
+	    // Reset collision flags
+    physics.passThisFrameYPos = false;
+    physics.passThisFrameYNeg = false;
+    physics.passThisFramePosX = false;
+    physics.passThisFrameNegX = false;
+
+    float dt_sec = dt_ms / 1000.0f;
+    physics.kdt = dt_sec;
+
     rect.w = 16;
     rect.h = 16;
-    bool wantJump = false;
-    // Check wall collision BEFORE deciding movement
-    bool onGround=false, wallLeft=false, wallRight=false, onCeiling=false, overlapping=false;
     rect.x = static_cast<int>(x);
     rect.y = static_cast<int>(y);
+
+    // ===== COLLISION CHECK =====
+    bool onGround = false, wallLeft = false, wallRight = false, onCeiling = false, overlapping = false;
     checkCollisionsXY(map, onGround, wallLeft, wallRight, onCeiling, overlapping, rect);
 
-    // If stuck against left OR right wall, freeze horizontal movement entirely
-    if (wallLeft) {
-    if (physics.kvelocityX < 0) physics.kvelocityX = 0;
-    physics.kaccelerationX = 0;
-    physics.kforceX = 0;
-}
+    std::cout << "=== COLLISION CHECK ===\n";
+    std::cout << "x: " << x << " y: " << y << "\n";
+    std::cout << "wallLeft: " << wallLeft << " wallRight: " << wallRight << " onGround: " << onGround << " overlapping: " << overlapping << "\n";
+    std::cout << "vx(before forces): " << vx << " kvelocityX(before forces): " << physics.kvelocityX << "\n";
 
-if (wallRight) {
-    if (physics.kvelocityX > 0) physics.kvelocityX = 0;
-    physics.kaccelerationX = 0;
-    physics.kforceX = 0;
-}
-  // ===== PATHFINDING LOGIC =====
-        int startX = static_cast<int>(std::round(x / map->tile_width));
-        int startY = static_cast<int>(std::round(y / map->tile_height));
-        int goalX = static_cast<int>(std::round(playerX / map->tile_width));
-        int goalY = static_cast<int>(std::round(playerY / map->tile_height));
-        std::vector<std::pair<int,int>> path = dijkstraPath(map, startX, startY, goalX, goalY);
+    // ===== PATHFINDING & PATROL =====
+    int startX = static_cast<int>(std::round(x / map->tile_width));
+    int startY = static_cast<int>(std::round(y / map->tile_height));
+    int goalX = static_cast<int>(std::round(playerX / map->tile_width));
+    int goalY = static_cast<int>(std::round(playerY / map->tile_height));
 
-        bool moveLeft=false, moveRight=false, jump=false;
-        float threshold = map->tile_width / 2.0f;
-        if(!path.empty()) {
-            auto next = path.front();
-            float nextX = next.first * map->tile_width;
-            float nextY = next.second * map->tile_height;
-            if(nextX > x + threshold) moveRight = true;
-            else if(nextX < x - threshold) moveLeft = true;
-            float jumpHeightThreshold = map->tile_height * 0.5f;
-            if ((y - nextY) > jumpHeightThreshold) {
-                jump = true;
-                jumpFrames = 10;
-            }
-        } else {
-            // Patrol Mode
-            if(patrolDir==0) patrolDir=1;
-            if(patrolDir>0) moveRight=true;
-            else moveLeft=true;
-            // Flip patrol dir on wall
-            bool dummyGround, wallL, wallR, ceilingC, overlapC;
-            rect.x = static_cast<int>(x);
-            rect.y = static_cast<int>(y);
-            checkCollisionsXY(map, dummyGround, wallL, wallR, ceilingC, overlapC, rect);
-            if(wallR) patrolDir=-1;
-            if(wallL) patrolDir=1;
-        }
-        if(wantJump)
-{
-	jump = true;
-}
-        // Apply Forces
-        if(moveLeft) physics.applyForce(-100,0);
-        if(moveRight) physics.applyForce(100,0);
-if(jumpFrames > 0 && onGround) {physics.applyForce(0,-50000);
-            jumpFrames--;
-	}
-    
+    std::vector<std::pair<int,int>> path = dijkstraPath(map, startX, startY, goalX, goalY);
 
-    // Gravity
-    if(!onGround) physics.applyForce(0, 9800);
-    else{
-       physics.kvelocityY = 0;
+    bool moveLeft=false, moveRight=false, wantJump=false;
+    float threshold = map->tile_width / 2.0f;
+
+    if(!path.empty()) {
+        auto next = path.front();
+        float nextX = next.first * map->tile_width;
+        float nextY = next.second * map->tile_height;
+
+        if(nextX > x + threshold) moveRight = true;
+        else if(nextX < x - threshold) moveLeft = true;
+
+        if ((y - nextY) > map->tile_height * 0.5f) wantJump = true;
+    } else {
+        if(patrolDir == 0) patrolDir = 1;
+        if(patrolDir > 0) moveRight = true;
+        else moveLeft = true;
+        if(wallRight) patrolDir = -1;
+        if(wallLeft) patrolDir = 1;
     }
-    // Commit to physics
+
+    std::cout << "moveLeft: " << moveLeft << " moveRight: " << moveRight << " wantJump: " << wantJump << "\n";
+
+    // ===== APPLY FORCES =====
+    if(moveLeft) physics.applyForce(-100, 0);
+    if(moveRight) physics.applyForce(100, 0);
+    if(!onGround) physics.applyForce(0, 9800);
+    else {
+        physics.kvelocityY = 0;
+        y = std::floor(y / map->tile_height) * map->tile_height;
+    }
+
+    if(wantJump && onGround) {
+        physics.applyForce(0, -50000);
+        jumpFrames = 10;
+    }
+
+    std::cout << "vx(after forces, before collision stops): " << vx << " kvelocityX: " << physics.kvelocityX << "\n";
+
+    // ===== WALL COLLISION CORRECTION =====
+    if(wallLeft) stopLeftMovement();
+    if(wallRight) stopRightMovement();
+
+    std::cout << "vx(after stopLeft/stopRight): " << vx << " kvelocityX: " << physics.kvelocityX << "\n";
+
+    // Overlap correction
+    if(overlapping) {
+        if(wallLeft && physics.kvelocityX < 0) physics.kvelocityX = 0;
+        if(wallRight && physics.kvelocityX > 0) physics.kvelocityX = 0;
+    }
+
+    // Clamp tiny velocities
+    if(std::abs(physics.kvelocityX) < 0.05f) physics.kvelocityX = 0;
+    if(std::abs(physics.kvelocityY) < 0.05f) physics.kvelocityY = 0;
+
+    std::cout << "vx(before physics.move): " << vx << " kvelocityX: " << physics.kvelocityX << "\n";
+
+    // ===== COMMIT PHYSICS =====
     physics.kmaxVel = 0.5f;
     physics.move();
-    cout << "wallLeft: " << wallLeft << " wallRight: " << wallRight << endl;
-    cout << "jumpFrames: " << jumpFrames << endl;
-    cout << "jump: " <<jump << endl;
-    if(wantJump)
-{
-	wantJump = false;
-}
-    if(wallLeft || wallRight)
-    {
-        cout << "Here!!! " << endl;	
-	wantJump = true;
-	jumpFrames = 2;
-    }
-    // Sync rect
+    // Sync physics for rendering/logging
+    update();
+
+
     rect.x = static_cast<int>(x);
     rect.y = static_cast<int>(y);
+
+    std::cout << "vx(after physics.move): " << vx << " kvelocityX: " << physics.kvelocityX << " x: " << x << " y: " << y << "\n";
 }
+
 // ===================== HELPERS =====================
 inline void moving_tile::stopRightMovement() {
-    if (physics.kvelocityX > 0) {
+    if (physics.kvelocityX > 0 || vy > 0) {
         physics.kvelocityX = 0;
         physics.kaccelerationX = 0;
         physics.kforceX = 0;
+	vy = 0;
         physics.passThisFramePosX = true;
     }
 }
 
 inline void moving_tile::stopLeftMovement() {
-    if (physics.kvelocityX < 0) {
+    if (physics.kvelocityX < 0 || vx < 0) {
         physics.kvelocityX = 0;
         physics.kaccelerationX = 0;
         physics.kforceX = 0;
+	vx = 0;
         physics.passThisFrameNegX = true;
     }
 }

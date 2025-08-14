@@ -1,7 +1,10 @@
 
 
 #include "map.hpp"
+#include "mapglobal.hpp"
 
+#include <cstdint>
+#include <unordered_set>
 anim_state animStates[MAX_TILES] = {};
 
 
@@ -47,11 +50,11 @@ void draw_layer(tmx_map *map, tmx_layer *layer) {
     tmx_image *im;
     void *image;
     float op = layer->opacity;
-
     for (int i = map->height - 1; i >= 0; --i) {
         for (int j = 0; j < map->width; ++j) {
             gid = (layer->content.gids[(i * map->width) + j]) & TMX_FLIP_BITS_REMOVAL;
             if (gid == 0 || gid >= map->tilecount) continue;
+    bool skip = false;
 
             tmx_tile *tile = tmx_get_tile(map, gid);
             if (!tile) continue;
@@ -65,11 +68,40 @@ void draw_layer(tmx_map *map, tmx_layer *layer) {
                 tmx_tileset_list *owner = map->ts_head;
                 while (owner && owner->tileset != tile->tileset) owner = owner->next;
                 if (!owner) continue;
-
+                
                 unsigned int first_gid = owner->firstgid;
                 unsigned int current_gid = first_gid + local_anim_tile_id;
                 tile = tmx_get_tile(map, current_gid);
-                if (!tile) continue;
+		  // Initialize enemy moving tile (no drawing here)
+
+
+
+    moving_tile e = {0};
+e.x = j * ts->tile_width;
+e.y = i * ts->tile_height;
+    e.vx = 0.0f;              
+    e.vy = 0.0f;
+    e.width = 16;
+    e.height = 16;
+    e.anim.current_frame = 0;
+    e.anim.time_acc = 0;
+    e.physics.kxPos = e.x;
+    e.physics.kyPos = e.y;
+    e.physics.kvelocityX = e.vx;
+    e.physics.kvelocityY = e.vy;
+    e.physics.kminVelX = 0.6;
+    uint64_t key = (((uint64_t)layer->id << 32) | ((uint64_t)i << 16) | (uint64_t)j);// Tileset info from map
+    tmx_tileset_list* tsl = map->ts_head;
+    if (tsl) {
+        e.ts = tsl->tileset;
+        e.ts_firstgid = tsl->firstgid;
+        e.base_local_id = 0;
+ if (tileSet.insert(key).second) { enemies.push_back(e); skip = true;}
+   if (!tile || skip) continue;
+
+}
+
+                if (!tile || skip) continue;
             }
 
             ts = tile->tileset;
@@ -83,11 +115,11 @@ void draw_layer(tmx_map *map, tmx_layer *layer) {
             else    image = ts->image->resource_image;
 
             flags = (layer->content.gids[(i * map->width) + j]) & ~TMX_FLIP_BITS_REMOVAL;
-
-            draw_tile(image, x, y, w, h,
+           if(strcmp(tile->tileset->name, "enemies")) draw_tile(image, x, y, w, h,
                       j * ts->tile_width, i * ts->tile_height, op, flags);
         }
     }
+
 }
 
 void draw_tile(void *image, unsigned int sx, unsigned int sy, unsigned int sw, unsigned int sh,

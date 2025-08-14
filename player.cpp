@@ -240,17 +240,17 @@ kvelocityX = playerVelX;
 
     // ===== INPUT FORCES =====
     if (moveLeft) {
-        applyForce(-100, 0);
+        applyForce(-1000, 0);
     }
     if (moveRight) {
-        applyForce(100, 0);
+        applyForce(1000, 0);
     }
     if (jump && onGround) {
         applyForce(0, -230000 * dt); // instant upward push
     }
 
     // ===== FRICTION =====
-    if (!(moveLeft || moveRight)) {
+    if (onGround && (!(moveLeft || moveRight))) {
         if (std::abs(kvelocityX) > 0.3) {
             kvelocityX *= 0.85;
         } else {
@@ -302,8 +302,7 @@ kvelocityX = playerVelX;
         playerRect.w,
         playerRect.h
     };
-    SDL_RenderDrawRect(wRenderer, &screenRect);
-    SDL_RenderPresent(wRenderer);
+    
     playerTexture.animateSprite(wRenderer, playerTexture.getCols(), playerTexture.getCells(), screenRect, rotate, NULL, flip);
 }
 

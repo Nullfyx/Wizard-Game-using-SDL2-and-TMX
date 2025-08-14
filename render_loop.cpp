@@ -4,9 +4,8 @@
 #include "map.hpp"
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_image.h>
-
-
-
+#include"mapglobal.hpp"
+#include <vector>
 static inline void draw_moving_tile(tmx_map *map, moving_tile *m) {
     if (!map || !m) return;
 
@@ -45,7 +44,7 @@ bool renderLoop(const char *path)
         tmx_perror("cannot load map");
         return false;
     }
-
+    build_enemies_from_map(map);
     bool moveLeft = false;
     bool moveRight = false;
     bool jump = false;
@@ -57,25 +56,7 @@ bool renderLoop(const char *path)
     std::string rightSrc = "sprites/wizard/wizard2.png";
     std::string leftSrc = "sprites/wizard/wizard2-flip.png";
 
-    // Initialize enemy moving tile (no drawing here)
-    moving_tile enemy = {0};
-    enemy.x = 200.0f;
-    enemy.y = -1.0f;
-    enemy.vx = 0.0f;
-    enemy.vy = 0.0f;
-    enemy.anim.current_frame = 0;
-    enemy.anim.time_acc = 0;
-    enemy.physics.kxPos = enemy.x;
-    enemy.physics.kyPos = enemy.y;
-    enemy.width = 16;
-    enemy.height = 16; 
-    tmx_tileset_list *tsl = map->ts_head;
-        if (tsl) {
-            enemy.ts = tsl->tileset;
-            enemy.ts_firstgid = tsl->firstgid;
-            enemy.base_local_id = 0; // local tile id
-    }
-    player.playerTexture.setFPS(30);
+      player.playerTexture.setFPS(30);
     int cols = 4;
     int cells = 4;
     player.playerTexture.WIMG_Load(src);
@@ -105,7 +86,12 @@ bool renderLoop(const char *path)
         float deltaTime = (currentTicks - lastTicks) / 1000.0f; // seconds elapsed since last frame
         lastTicks = currentTicks;
 
+        for(auto enemyId : tileSet)
+	{
+	    cout << enemyId <<  " ";
 
+	}
+	cout  << endl;
         // Jump logic using jumpIndex
         if (jumpIndex > 0) {
             jump = true;
@@ -171,7 +157,10 @@ bool renderLoop(const char *path)
         camera.h = scaledScreenHeight;
 
         // Updates
-	enemy.enemyUpdate(deltaTime, map);
+ for (auto& enemy : enemies) {
+    enemy.enemyUpdate(deltaTime, map);   
+ }
+
         // Update player logic
         player.update(deltaTime);
         
@@ -230,8 +219,9 @@ bool renderLoop(const char *path)
 
 	// Render map and actors
         render_map(map);
-        draw_moving_tile(map, &enemy);
         player.moveRender(moveRight, moveLeft, jump);
+	for(auto enemy: enemies)
+	    draw_moving_tile(map, &enemy);
 	playerX = player.kxPos;
 	playerY = player.kyPos;
         SDL_RenderPresent(wRenderer);
