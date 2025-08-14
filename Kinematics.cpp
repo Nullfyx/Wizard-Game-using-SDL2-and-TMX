@@ -21,6 +21,7 @@ Kinematics::Kinematics()
     passThisFramePosX = false;
     passThisFrameYNeg = false;
     kmaxVel = 3;
+    kminVelX = 0;
 }
 
 void Kinematics::applyForce(double fX, double fY)
@@ -74,7 +75,8 @@ void Kinematics::move()
     if (passThisFrameNegX && remainderX < 0) remainderX = 0;
 
     // Apply position if accumulated movement exceeds threshold
-    if (abs(remainderX) >= 0.9) {
+    if (abs(remainderX) >= 0.45) {
+
         kxPos += remainderX;
         remainderX = 0;
     }

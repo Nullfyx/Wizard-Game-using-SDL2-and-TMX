@@ -89,7 +89,7 @@ e.y = i * ts->tile_height;
     e.physics.kyPos = e.y;
     e.physics.kvelocityX = e.vx;
     e.physics.kvelocityY = e.vy;
-    e.physics.kminVelX = 0.6;
+    e.physics.kminVelX = 0.5;
     uint64_t key = (((uint64_t)layer->id << 32) | ((uint64_t)i << 16) | (uint64_t)j);// Tileset info from map
     tmx_tileset_list* tsl = map->ts_head;
     if (tsl) {
