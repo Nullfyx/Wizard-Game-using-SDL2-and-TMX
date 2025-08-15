@@ -10,31 +10,6 @@
 #include <vector>
     vector<projectile*> projectiles = {};
 
-static inline void draw_moving_tile(tmx_map *map, moving_tile *m) {
-    if (!map || !m) return;
-    unsigned int base_gid = m->ts_firstgid + m->base_local_id;
-    tmx_tile *base_tile = tmx_get_tile(map, base_gid);
-    if (!base_tile) return;
-
-    unsigned int local_frame_id = (base_tile->animation_len > 0)
-        ? base_tile->animation[m->anim.current_frame].tile_id
-        : m->base_local_id;
-
-    unsigned int current_gid = m->ts_firstgid + local_frame_id;
-    tmx_tile *frame = tmx_get_tile(map, current_gid);
-    if (!frame) return;
-
-    tmx_tileset *ts = frame->tileset;
-    tmx_image *im = frame->image ? frame->image : ts->image;
-    void *image = im->resource_image;
-
-    unsigned int sx = frame->ul_x;
-    unsigned int sy = frame->ul_y;
-    unsigned int sw = ts->tile_width;
-    unsigned int sh = ts->tile_height;
-
-    draw_tile(image, sx, sy, sw, sh, (unsigned int)m->x, (unsigned int)m->y, 1.0f, 0);
-}
 bool renderLoop(const char *path)
 {
     int jumpIndex = 0;
@@ -159,17 +134,28 @@ bool renderLoop(const char *path)
 
  
 // Update enemies and check collisions
+
 for (auto& enemy : enemies) {
     enemy.enemyUpdate(deltaTime, map);
-    SDL_Rect updateRect = {enemy.rect.x - camera.x, enemy.rect.y - camera.y, enemy.rect.w, enemy.rect.h};
+    
     for (auto& pro : projectiles) {
         if (!pro) continue; 
-	if (checkCollisionB(updateRect , pro->proRect)) {
-	    enemy.health -= pro->power;
-	    enemy.jumpFrames = 2;
+
+        if (checkCollisionB(enemy.rect , pro->proRect)) {
+            enemy.health -= pro->power;
+
+            // Clamp health to valid range
+            if (enemy.health < 0) enemy.health = 0;
+            if (enemy.health > 10) enemy.health = 10;
+
+            // Set alpha based on health
+            float alpha_f = (enemy.health / 10.0f) * 255.0f;
+	    Uint8 a;
+	    enemy.texture.readAlpha(a);
+	    cout << (unsigned) a << endl;
+            enemy.texture.setAlpha(static_cast<Uint8>(alpha_f));
             pro->destroyMe = true;	
         }
-
     }
 }
 enemies.erase(
@@ -237,8 +223,15 @@ enemies.erase(
 	// Render map and actors
         render_map(map);
         player.moveRender(moveRight, moveLeft, jump, attack, projectiles);
-	for(auto enemy: enemies)
-	    draw_moving_tile(map, &enemy);
+	for(auto e: enemies){
+		SDL_Rect dst{
+    e.rect.x - camera.x,
+    e.rect.y - camera.y,
+    e.rect.w,
+    e.rect.h
+};
+	    e.texture.animateSprite(wRenderer, e.texture.getCols(), e.texture.getCells(), dst);
+	}
 	playerX = player.kxPos;
 	playerY = player.kyPos;
         SDL_RenderPresent(wRenderer);

@@ -42,6 +42,12 @@ void build_enemies_from_map(tmx_map *map)
 
 
     moving_tile e = {0};
+    tmx_tileset *ts = tile->tileset;
+if (!ts) continue; // skip if missing
+
+e.x = j * ts->tile_width;
+e.y = i * ts->tile_height;
+
 e.x = j * ts->tile_width;
 e.y = i * ts->tile_height;
     e.vx = 0.0f;              
@@ -61,6 +67,26 @@ e.y = i * ts->tile_height;
         e.ts = tsl->tileset;
         e.ts_firstgid = tsl->firstgid;
         e.base_local_id = 0;
+const char* imgSrc = nullptr;
+
+if (tile->image) {
+    imgSrc = tile->image->source;
+} else if (tile->tileset && tile->tileset->image) {
+    imgSrc = tile->tileset->image->source;
+}
+
+if (imgSrc) {
+    e.texture.WIMG_Load(std::string(imgSrc));
+    e.texture.setBlendMode( SDL_BLENDMODE_BLEND );
+    e.texture.setCols(2);
+    e.texture.setFPS(20);
+    e.texture.setCells(4);
+    e.rect = {(int)tile->ul_x, (int)tile->ul_y, (int)tile->width,(int) tile-> height};
+    e.texture.animateSprite(wRenderer, e.texture.getCols(), e.texture.getCells(), e.rect);
+
+} else {
+    std::cout << "Warning: No image found for tile GID " << gid << "\n";
+}
  auto [it, inserted] = tileSet.insert((((uint64_t)layer->id<<32)|((uint64_t)i<<16)|(uint64_t)j)); if(inserted){ enemies.push_back(e); };
 
 }
@@ -68,17 +94,7 @@ e.y = i * ts->tile_height;
                 if (!tile) continue;
             }
 
-            ts = tile->tileset;
-            im = tile->image;
-            x = tile->ul_x;
-            y = tile->ul_y;
-            w = ts->tile_width;
-            h = ts->tile_height;
-
-            if (im) image = im->resource_image;
-            else    image = ts->image->resource_image;
-
-            flags = (layer->content.gids[(i * map->width) + j]) & ~TMX_FLIP_BITS_REMOVAL;
+            
 
         }
     }

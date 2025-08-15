@@ -45,7 +45,6 @@ typedef struct {
 } moving_tile;
 
 void build_enemies_from_map(tmx_map *map);
-static inline void draw_moving_tile(tmx_map *map, moving_tile *m);
 extern std::vector<moving_tile> enemies;
 extern std::unordered_set<uint64_t> tileSet;
 extern tmx_map *map;

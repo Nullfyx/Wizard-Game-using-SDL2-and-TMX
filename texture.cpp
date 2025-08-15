@@ -1,5 +1,8 @@
 #include "texture.hpp"
 #include "timer.hpp"
+#include <SDL2/SDL_blendmode.h>
+#include <SDL2/SDL_log.h>
+#include <SDL2/SDL_render.h>
 // constructor
 WTexture::WTexture()
 {
@@ -142,6 +145,22 @@ void WTexture::render(SDL_Renderer *renderer, SDL_Rect *srcRect, SDL_Rect *destR
     }
 }
 
+void WTexture::setColor( Uint8 red, Uint8 green, Uint8 blue )
+{
+    //Modulate texture
+    SDL_SetTextureColorMod( wTexture, red, green, blue );
+}
+void WTexture::setBlendMode( SDL_BlendMode blending )
+{
+    //Set blending function
+    SDL_SetTextureBlendMode( wTexture, blending );
+}
+        
+void WTexture::setAlpha( Uint8 alpha )
+{
+    //Modulate texture alpha
+    SDL_SetTextureAlphaMod( wTexture, alpha );
+}
 // selected setters and getters
 void WTexture::setCols(int c)
 {
@@ -171,4 +190,9 @@ int WTexture::getCells()
 int WTexture::getFPS()
 {
     return fps;
+}
+
+void WTexture::readAlpha(Uint8 &a)
+{
+	SDL_GetTextureAlphaMod(wTexture, &a);
 }

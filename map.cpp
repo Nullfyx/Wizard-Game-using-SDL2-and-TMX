@@ -179,32 +179,4 @@ void draw_objects(tmx_object_group *objgr) {
     }
 }
 
-// Render a moving tile using its current animation frame at m->x, m->y
-void draw_moving_tile(tmx_map *map, moving_tile *m) {
-    if (!map || !m) return;
-
-    unsigned int base_gid = m->ts_firstgid + m->base_local_id;
-    tmx_tile *base_tile = tmx_get_tile(map, base_gid);
-    if (!base_tile) return;
-
-    unsigned int local_frame_id = (base_tile->animation_len > 0)
-        ? base_tile->animation[m->anim.current_frame].tile_id
-        : m->base_local_id;
-
-    unsigned int current_gid = m->ts_firstgid + local_frame_id;
-    tmx_tile *frame = tmx_get_tile(map, current_gid);
-    if (!frame) return;
-
-    tmx_tileset *ts = frame->tileset;
-    tmx_image *im = frame->image ? frame->image : ts->image;
-    void *image = im->resource_image;
-
-    unsigned int sx = frame->ul_x;
-    unsigned int sy = frame->ul_y;
-    unsigned int sw = ts->tile_width;
-    unsigned int sh = ts->tile_height;
-    m->texture.WIMG_Load(std::string(im->source));
-    SDL_Rect destRect = {(int)sx, (int)sy, (int)sw, (int)sh};
-    m->texture.render(wRenderer, NULL, &destRect);
-   // draw_tile(image, sx, sy, sw, sh, (unsigned int)m->x, (unsigned int)m->y, 1.0f, 0);
-}
+ 

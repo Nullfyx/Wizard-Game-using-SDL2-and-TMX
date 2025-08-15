@@ -158,8 +158,6 @@ void moving_tile::move(unsigned int dt_ms, tmx_map* map) {
     float dt_sec = dt_ms / 1000.0f;
     physics.kdt = dt_sec;
 
-    rect.w = 16;
-    rect.h = 16;
     rect.x = static_cast<int>(x);
     rect.y = static_cast<int>(y);
 

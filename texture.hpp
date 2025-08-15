@@ -42,6 +42,13 @@ public:
     // render the texture
     void render(SDL_Renderer *renderer, SDL_Rect *srcRect, SDL_Rect *destRect, double angle = 0.0, SDL_Point *center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE);
 
+    void setColor( Uint8 red, Uint8 green, Uint8 blue );
+
+        //Set blending
+        void setBlendMode( SDL_BlendMode blending );
+
+        //Set alpha modulation
+        void setAlpha( Uint8 alpha );
     // selected setters and getters
     void setCols(int c);
 
@@ -54,5 +61,8 @@ public:
     int getCells();
 
     int getFPS();
+
+    void readAlpha(Uint8 &a);
+
 };
 #endif
