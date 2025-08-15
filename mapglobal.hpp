@@ -5,6 +5,7 @@
 #include <SDL2/SDL.h>
 #include <tmx.h>
 #include "Kinematics.hpp"
+#include "texture.hpp"
 const int MAX_TILES = 1000;
 typedef struct {
     int current_frame;
@@ -40,6 +41,7 @@ typedef struct {
      void stopLeftMovement();
      int patrolDir = 0;
      int health = 10;
+     WTexture texture;
 } moving_tile;
 
 void build_enemies_from_map(tmx_map *map);

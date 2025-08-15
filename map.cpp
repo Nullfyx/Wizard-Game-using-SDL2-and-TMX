@@ -1,8 +1,9 @@
 
 
 #include "map.hpp"
+#include "globals.hpp"
 #include "mapglobal.hpp"
-
+#include <string>
 #include <cstdint>
 #include <unordered_set>
 anim_state animStates[MAX_TILES] = {};
@@ -202,6 +203,8 @@ void draw_moving_tile(tmx_map *map, moving_tile *m) {
     unsigned int sy = frame->ul_y;
     unsigned int sw = ts->tile_width;
     unsigned int sh = ts->tile_height;
-
-    draw_tile(image, sx, sy, sw, sh, (unsigned int)m->x, (unsigned int)m->y, 1.0f, 0);
+    m->texture.WIMG_Load(std::string(im->source));
+    SDL_Rect destRect = {(int)sx, (int)sy, (int)sw, (int)sh};
+    m->texture.render(wRenderer, NULL, &destRect);
+   // draw_tile(image, sx, sy, sw, sh, (unsigned int)m->x, (unsigned int)m->y, 1.0f, 0);
 }
