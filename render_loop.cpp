@@ -137,11 +137,18 @@ bool renderLoop(const char *path)
 
 for (auto& enemy : enemies) {
     enemy.enemyUpdate(deltaTime, map);
-    
+    SDL_Rect dst{
+    enemy.rect.x - camera.x,
+    enemy.rect.y - camera.y,
+    enemy.rect.w,
+    enemy.rect.h
+};
+enemy.texture.animateSprite(wRenderer, enemy.texture.getCols(), enemy.texture.getCells(), dst);
+
     for (auto& pro : projectiles) {
         if (!pro) continue; 
 
-        if (checkCollisionB(enemy.rect , pro->proRect)) {
+        if (checkCollisionB(dst , pro->proRect)) {
             enemy.health -= pro->power;
 
             // Clamp health to valid range
