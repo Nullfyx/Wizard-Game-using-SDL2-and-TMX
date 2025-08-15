@@ -207,7 +207,7 @@ void Player::setJumping(bool j)
 {
     jumping = j;
 }
-void Player::moveRender(bool moveRight, bool moveLeft, bool jump, bool attack, vector<projectile*> &projectiles)
+void Player::moveRender(bool moveRight, bool moveLeft, bool jump, bool attack, vector<projectile*> projectiles)
 {
 
     // ===== RESET FRAME FLAGS =====
@@ -239,6 +239,7 @@ kvelocityX = playerVelX;
             passThisFrameYPos = true; 
         }
     }
+
     // ===== INPUT FORCES =====
     if (moveLeft) {
         applyForce(-1000, 0);
@@ -249,29 +250,15 @@ kvelocityX = playerVelX;
     if (jump && onGround) {
         applyForce(0, -230000 * dt); // instant upward push
     }
-if (attack)
-{
-    // Pick nearest enemy at spawn
-    float closestDist = FLT_MAX;
-    float targetX = kxPos; // default to player if no enemies
-    float targetY = kyPos;
 
-    for (const auto &enemy : enemies) {
-        float dx = enemy.x - kxPos;
-        float dy = enemy.y - kyPos;
-        float distSq = dx*dx + dy*dy;
-        if (distSq < closestDist) {
-            closestDist = distSq;
-            targetX = enemy.x;
-            targetY = enemy.y;
-        }
+    if (attack)
+    {
+	for(auto projectile: projectiles)
+		SDL_Log((char*)projectiles.size());
+        projectile *p = new projectile;
+	projectiles.push_back(p);
     }
-    // Create projectile with exact physics positions
-    projectile *p = new projectile(static_cast<int>(kxPos), static_cast<int>(kyPos),
-                                   static_cast<int>(targetX), static_cast<int>(targetY));
-    projectiles.push_back(p);
-}
-
+     
     // ===== FRICTION =====
     if (onGround && (!(moveLeft || moveRight))) {
         if (std::abs(kvelocityX) > 0.3) {
@@ -303,15 +290,10 @@ if (attack)
     kmaxVel = wMaxVel;
     // ===== PHYSICS MOVE =====
     move();
-    for (int i = projectiles.size() - 1; i >= 0; --i) {
-    if (projectiles[i]->destroyMe) {
-        delete projectiles[i];
-        projectiles.erase(projectiles.begin() + i);
-    } else {
-        projectiles[i]->update();
+    for(auto pro : projectiles)
+    {
+	pro->update();
     }
-}
-
     // ===== UPDATE STATE =====
     isGrounded = onGround;
     isRoofed = onCeiling;

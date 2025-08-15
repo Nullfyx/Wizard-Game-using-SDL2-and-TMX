@@ -124,21 +124,21 @@ void WTexture::animateSprite(SDL_Renderer *wRenderer, int cols, int cells, SDL_R
     srcRect.w = frameWidth;
     srcRect.h = frameHeight;
 
-    render(wRenderer, srcRect, destRect, angle, center, flip);
+    render(wRenderer, &srcRect,&destRect, angle, center, flip);
 }
 
 // render the texture
-void WTexture::render(SDL_Renderer *renderer, SDL_Rect srcRect, SDL_Rect destRect, double angle, SDL_Point *center, SDL_RendererFlip flip)
+void WTexture::render(SDL_Renderer *renderer, SDL_Rect *srcRect, SDL_Rect *destRect, double angle, SDL_Point *center, SDL_RendererFlip flip)
 {
     if (angle != 0.0 || center != NULL || flip != SDL_FLIP_NONE)
     {
         // Use extended function if rotation or flip is involved
-        SDL_RenderCopyEx(renderer, wTexture, &srcRect, &destRect, angle, center, flip);
+        SDL_RenderCopyEx(renderer, wTexture, srcRect, destRect, angle, center, flip);
     }
     else
     {
         // Use simple render
-        SDL_RenderCopy(renderer, wTexture, &srcRect, &destRect);
+        SDL_RenderCopy(renderer, wTexture, srcRect, destRect);
     }
 }
 

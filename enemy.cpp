@@ -18,7 +18,6 @@ void update_tile_anim(tmx_tile* tile, anim_state* state, unsigned int delta_ms) 
     if (state->time_acc >= frame_duration) {
         state->time_acc -= frame_duration;
         state->current_frame = (state->current_frame + 1) % tile->animation_len;
-        SDL_Log("Tile %d advanced to frame %d", tile->id, state->current_frame);
     }
 }
 
@@ -107,7 +106,6 @@ int cx = goalX, cy = goalY;
 
 // If no path, prev remains {-1,-1}
 if (!inBounds(cx, cy) || prev[cx][cy].first == -1) {
-    SDL_Log("Pathfinding: no path found");
     return {};
 }
 
@@ -128,8 +126,7 @@ void moving_tile::update() {
       vx = physics.kvelocityX;
     vy = physics.kvelocityY;
     x = physics.kxPos;
-    y = physics.kyPos;
-    
+    y = physics.kyPos; 
 }
 
 void moving_tile::enemyUpdate(float deltaTime, tmx_map* map) {
@@ -170,10 +167,6 @@ void moving_tile::move(unsigned int dt_ms, tmx_map* map) {
     bool onGround = false, wallLeft = false, wallRight = false, onCeiling = false, overlapping = false;
     checkCollisionsXY(map, onGround, wallLeft, wallRight, onCeiling, overlapping, rect);
 
-    std::cout << "=== COLLISION CHECK ===\n";
-    std::cout << "x: " << x << " y: " << y << "\n";
-    std::cout << "wallLeft: " << wallLeft << " wallRight: " << wallRight << " onGround: " << onGround << " overlapping: " << overlapping << "\n";
-    std::cout << "vx(before forces): " << vx << " kvelocityX(before forces): " << physics.kvelocityX << "\n";
 
     // ===== PATHFINDING & PATROL =====
     int startX = static_cast<int>(std::round(x / map->tile_width));
@@ -203,7 +196,6 @@ void moving_tile::move(unsigned int dt_ms, tmx_map* map) {
         if(wallLeft) patrolDir = 1;
     }
 
-    std::cout << "moveLeft: " << moveLeft << " moveRight: " << moveRight << " wantJump: " << wantJump << "\n";
 
     // ===== APPLY FORCES =====
     if(moveLeft) physics.applyForce(-200, 0);
@@ -219,13 +211,11 @@ void moving_tile::move(unsigned int dt_ms, tmx_map* map) {
         jumpFrames = 10;
     }
 
-    std::cout << "vx(after forces, before collision stops): " << vx << " kvelocityX: " << physics.kvelocityX << "\n";
 
     // ===== WALL COLLISION CORRECTION =====
     if(wallLeft) stopLeftMovement();
     if(wallRight) stopRightMovement();
 
-    std::cout << "vx(after stopLeft/stopRight): " << vx << " kvelocityX: " << physics.kvelocityX << "\n";
 
     // Overlap correction
     if(overlapping) {
@@ -237,7 +227,6 @@ void moving_tile::move(unsigned int dt_ms, tmx_map* map) {
     if(std::abs(physics.kvelocityX) < 0.05f) physics.kvelocityX = 0;
     if(std::abs(physics.kvelocityY) < 0.05f) physics.kvelocityY = 0;
 
-    std::cout << "vx(before physics.move): " << vx << " kvelocityX: " << physics.kvelocityX << "\n";
 
     // ===== COMMIT PHYSICS =====
     physics.kmaxVel = 0.5f;
@@ -249,7 +238,6 @@ void moving_tile::move(unsigned int dt_ms, tmx_map* map) {
     rect.x = static_cast<int>(x);
     rect.y = static_cast<int>(y);
 
-    std::cout << "vx(after physics.move): " << vx << " kvelocityX: " << physics.kvelocityX << " x: " << x << " y: " << y << "\n";
 }
 
 // ===================== HELPERS =====================

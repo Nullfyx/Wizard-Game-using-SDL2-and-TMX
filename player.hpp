@@ -4,11 +4,13 @@
 #include <iostream>
 #include "map.hpp"
 #include "gravity.hpp"
+#include "projectile.hpp"
 #include "texture.hpp"
 #include "timer.hpp"
 #include <tmx.h>
 #include "collisions.hpp"
 #include "Kinematics.hpp"
+#include"mapglobal.hpp"
 using namespace std;
 
 class Player : public Kinematics
@@ -147,7 +149,7 @@ public:
     void setJumping(bool j);
 
     // move the player
-    void moveRender(bool moveRight, bool moveLeft, bool jump);
+    void moveRender(bool moveRight, bool moveLeft, bool jump, bool attack, vector<projectile*> &projectiles);
 
     // update the time;
     void update(float d);

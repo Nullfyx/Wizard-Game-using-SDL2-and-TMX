@@ -5,10 +5,13 @@
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_image.h>
 #include"mapglobal.hpp"
+#include "projectile.hpp"
+#include "bounding_box.hpp"
 #include <vector>
+    vector<projectile*> projectiles = {};
+
 static inline void draw_moving_tile(tmx_map *map, moving_tile *m) {
     if (!map || !m) return;
-
     unsigned int base_gid = m->ts_firstgid + m->base_local_id;
     tmx_tile *base_tile = tmx_get_tile(map, base_gid);
     if (!base_tile) return;
@@ -39,7 +42,7 @@ bool renderLoop(const char *path)
     bool quit = false;
 
     // Load map
-    tmx_map *map = tmx_load(path);
+    map = tmx_load(path);
     if (!map) {
         tmx_perror("cannot load map");
         return false;
@@ -48,7 +51,7 @@ bool renderLoop(const char *path)
     bool moveLeft = false;
     bool moveRight = false;
     bool jump = false;
-
+    bool attack = false;
     // Player setup
     Player player;
     player.setMap(map);
@@ -81,17 +84,11 @@ bool renderLoop(const char *path)
     Uint32 lastTicks = SDL_GetTicks();
 
     while (!quit) {
-
+   
         Uint32 currentTicks = SDL_GetTicks();
         float deltaTime = (currentTicks - lastTicks) / 1000.0f; // seconds elapsed since last frame
         lastTicks = currentTicks;
-
-        for(auto enemyId : tileSet)
-	{
-	    cout << enemyId <<  " ";
-
-	}
-	cout  << endl;
+	attack = false;
         // Jump logic using jumpIndex
         if (jumpIndex > 0) {
             jump = true;
@@ -121,6 +118,9 @@ bool renderLoop(const char *path)
                         jump = true;
                     }
                     break;
+		case SDLK_1:
+                    attack = true;
+		    break;
                 }
             }
             if (e.type == SDL_KEYUP && e.key.repeat == 0) {
@@ -137,7 +137,6 @@ bool renderLoop(const char *path)
                 }
             }
         }
-
         // Update camera position
         int map_width_px = map->width * map->tile_width;
         int map_height_px = map->height * map->tile_height;
@@ -157,10 +156,28 @@ bool renderLoop(const char *path)
         camera.h = scaledScreenHeight;
 
         // Updates
- for (auto& enemy : enemies) {
-    enemy.enemyUpdate(deltaTime, map);   
- }
 
+ 
+// Update enemies and check collisions
+for (auto& enemy : enemies) {
+    enemy.enemyUpdate(deltaTime, map);
+    SDL_Rect updateRect = {enemy.rect.x - camera.x, enemy.rect.y - camera.y, enemy.rect.w, enemy.rect.h};
+    for (auto& pro : projectiles) {
+        if (!pro) continue; 
+	if (checkCollisionB(updateRect , pro->proRect)) {
+	    enemy.health -= pro->power;
+	    enemy.jumpFrames = 2;
+            pro->destroyMe = true;	
+        }
+
+    }
+}
+enemies.erase(
+    std::remove_if(enemies.begin(), enemies.end(),
+                   [](const moving_tile& e){ return e.health <= 0; }),
+    enemies.end()
+);
+// Remove projectiles marked for destruction safely
         // Update player logic
         player.update(deltaTime);
         
@@ -219,7 +236,7 @@ bool renderLoop(const char *path)
 
 	// Render map and actors
         render_map(map);
-        player.moveRender(moveRight, moveLeft, jump);
+        player.moveRender(moveRight, moveLeft, jump, attack, projectiles);
 	for(auto enemy: enemies)
 	    draw_moving_tile(map, &enemy);
 	playerX = player.kxPos;
