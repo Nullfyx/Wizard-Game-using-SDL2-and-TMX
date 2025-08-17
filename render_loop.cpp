@@ -163,7 +163,7 @@ if (enemy.health <= 0) {
 }    for (auto& pro : projectiles) {
         if (!pro) continue; 
 
-        if (checkCollisionB(dst , pro->proRect) && pro->canFire()) {
+        if (checkCollisionB(dst , pro->proRect)) {
             enemy.health -= pro->power;
             cout  << pro->canFire() << endl;
             // Clamp health to valid range
