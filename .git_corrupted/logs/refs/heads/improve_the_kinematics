@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 d4e2e6b92e1599b80d6e8a99c15e0dca70626363 nullfyx <taranveersinghpunjabi@gmail.com> 1754448995 +0530	branch: Created from origin/improve_the_kinematics
+d4e2e6b92e1599b80d6e8a99c15e0dca70626363 38092284eec0ee906bf38d38b23fbe43550a1260 nullfyx <taranveersinghpunjabi@gmail.com> 1754468144 +0530	commit: make a separately new file for better collision logic
+38092284eec0ee906bf38d38b23fbe43550a1260 80854f5fe2a7f65aae5f57f313f4d102d5582889 nullfyx <taranveersinghpunjabi@gmail.com> 1754469955 +0530	commit: get a pixel perfect and modular function set to detect collisions
+80854f5fe2a7f65aae5f57f313f4d102d5582889 72227b181a984878ca76e7818b54b4abc4754f5a nullfyx <taranveersinghpunjabi@gmail.com> 1754499205 +0530	commit: completely rewrite moveRender() function for refactorment
+72227b181a984878ca76e7818b54b4abc4754f5a 3fe4f53f80aeb154f617a006e245dc8eb1f9d9cc nullfyx <taranveersinghpunjabi@gmail.com> 1754501171 +0530	commit: finished improving collisions and imported sprites
+3fe4f53f80aeb154f617a006e245dc8eb1f9d9cc b2aa380e39e336dd288f4bd223688bc2be4b1de0 nullfyx <taranveersinghpunjabi@gmail.com> 1754677503 +0530	commit: minor changes
+b2aa380e39e336dd288f4bd223688bc2be4b1de0 d440be48d2f5df1fc10f6cce72198ce8043affa4 nullfyx <taranveersinghpunjabi@gmail.com> 1754691093 +0530	commit: improve the collision detection - nealy pixel perfect! now uses collision bounders
