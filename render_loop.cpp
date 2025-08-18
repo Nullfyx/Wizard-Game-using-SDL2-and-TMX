@@ -11,7 +11,8 @@
     vector<projectile*> projectiles = {};
 bool renderLoop(const char *path)
 {
-    int jumpIndex = 0;
+    bool incDt = false;
+    float jumpTimer = 0.0f;
     SDL_Event e;
     bool quit = false;
     bool isDead = false;
@@ -62,15 +63,15 @@ bool renderLoop(const char *path)
         Uint32 currentTicks = SDL_GetTicks();
         float deltaTime = (currentTicks - lastTicks) / 1000.0f; // seconds elapsed since last frame
         lastTicks = currentTicks;
-        // Jump logic using jumpIndex
-        if (jumpIndex > 0) {
-            jump = true;
-            jumpIndex = (jumpIndex + 1) % 5 * deltaTime * 5;
-        } else {
-            jumpIndex = 0;
-            jump = false;
-        }
 
+
+if (jump) {
+    jumpTimer += deltaTime;
+    if (jumpTimer >= 0.5f) {  // half-second jump
+        jump = false;
+        jumpTimer = 0.0f;
+    }
+}
         // Input handling
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT)
@@ -86,13 +87,11 @@ bool renderLoop(const char *path)
                     player.playerTexture.WIMG_Load(rightSrc);
                     break;
                 case SDLK_SPACE:
-                    if (jumpIndex < 10) {
-                        jumpIndex = 1;
                         jump = true;
-                    }
+                    
                     break;
 		case SDLK_1:
-                    attack = true;
+		    incDt = true;
 		    break;
                 }
             }
@@ -105,13 +104,14 @@ bool renderLoop(const char *path)
                     moveRight = false;
                     break;
 		case SDLK_1:
-		    attack = false;
+		    incDt = false;
                 default:
                     player.playerTexture.WIMG_Load(src);
                     break;
                 }
             }
         }
+if(incDt) { player.accDt += deltaTime; } if(player.accDt >= player.cooldown) { attack = true; player.accDt = 0; } else attack = false;
         // Update camera position
         int map_width_px = map->width * map->tile_width;
         int map_height_px = map->height * map->tile_height;
@@ -145,6 +145,7 @@ for (auto& enemy : enemies) {
 };
 enemy.texture.animateSprite(wRenderer, enemy.texture.getCols(), enemy.texture.getCells(), dst, enemy.texture.angle)
 ;
+
         // Set alpha b`ased on health
 	    		   Uint8 a;
                            enemy.texture.readAlpha(a);
@@ -161,6 +162,8 @@ if (enemy.health <= 0) {
     }
        enemy.texture.setAlpha(a);
 }    for (auto& pro : projectiles) {
+		cout << pro->accDt << endl;
+
         if (!pro) continue; 
 
         if (checkCollisionB(dst , pro->proRect)) {
@@ -178,7 +181,8 @@ if (enemy.health <= 0) {
 
 if(checkCollisionB(enemy.rect, *(player.getCollider())))
 {
-   if(!isDead)
+   enemy.accDt += deltaTime;
+   if(!isDead && enemy.accDt >= enemy.cooldown)
        player.setLives(std::max(0, player.lives() - enemy.atk));
 }
 
@@ -219,7 +223,8 @@ cout << player.lives() <<endl;
 
     // Render background — handle wrap-around for X and Y
     // Case 1: fits without wrap
-    if (bgSrcRect.x + bgSrcRect.w <= bgTexW && bgSrcRect.y + bgSrcRect.h <= bgTexH) {
+
+if (bgSrcRect.x + bgSrcRect.w <= bgTexW && bgSrcRect.y + bgSrcRect.h <= bgTexH) {
         SDL_RenderCopy(wRenderer, backgroundTex, &bgSrcRect, &bgDstRect);
     }
     // Case 2: Wrap horizontally or vertically

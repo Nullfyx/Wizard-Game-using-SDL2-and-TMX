@@ -71,6 +71,8 @@ class Player : public Kinematics
 public:
     // constructor
     Player();
+    double cooldown;
+    double accDt;
     bool isRoofed;
     bool isRightObstructed;
     bool isLeftObstructed;

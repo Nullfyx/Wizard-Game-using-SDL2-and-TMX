@@ -44,6 +44,7 @@ typedef struct {
      int atk = 2;
      double cooldown = 1;
      WTexture texture;
+     double accDt;
 } moving_tile;
 
 void build_enemies_from_map(tmx_map *map);

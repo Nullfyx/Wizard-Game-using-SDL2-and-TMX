@@ -11,6 +11,7 @@
 	SDL_Rect proRect;
 	Kinematics physics;
 	void update();
+	double accDt = 0;
 	WTexture texture;
 	static int index;
 	bool destroyMe = false;

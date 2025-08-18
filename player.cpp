@@ -23,6 +23,8 @@ Player::Player()
     isRoofed = false;
     isRightObstructed = false;
     isLeftObstructed = false;
+    accDt = 0;
+    cooldown = 0.5;
 };
 
 // getters and setters (all)
