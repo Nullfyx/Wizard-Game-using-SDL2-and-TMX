@@ -330,8 +330,8 @@ if (attack)
 
     // ===== RENDER =====
     SDL_Rect screenRect = { 
-        static_cast<int>(playerRect.x - camera.x),
-        static_cast<int>(playerRect.y - camera.y),
+        static_cast<int>(playerRect.x - camera.rect.x),
+        static_cast<int>(playerRect.y - camera.rect.y),
         playerRect.w,
         playerRect.h
     };

@@ -130,8 +130,8 @@ void draw_tile(void *image, unsigned int sx, unsigned int sy, unsigned int sw, u
     src_rect.y = sy;
     src_rect.w = sw;
     src_rect.h = sh;
-    dest_rect.x = (int)(dx - camera.x);
-    dest_rect.y = (int)(dy - camera.y);
+    dest_rect.x = (int)(dx - camera.rect.x);
+    dest_rect.y = (int)(dy - camera.rect.y);
     dest_rect.w = sw;
     dest_rect.h = sh;
     // Note: flags ignored; add flipping if needed
@@ -162,8 +162,8 @@ void draw_objects(tmx_object_group *objgr) {
     while (head) {
         if (head->visible) {
             if (head->obj_type == OT_SQUARE) {
-                rect.x = (int)((head->x - camera.x) * 4.0);
-                rect.y = (int)((head->y - camera.y) * 4.0);
+                rect.x = (int)((head->x - camera.rect.x) * 4.0);
+                rect.y = (int)((head->y - camera.rect.y) * 4.0);
                 rect.w = (int)(head->width * 4.0);
                 rect.h = (int)(head->height * 4.0);
                 SDL_RenderDrawRect(wRenderer, &rect);

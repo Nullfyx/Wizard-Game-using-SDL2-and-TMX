@@ -7,6 +7,7 @@
 #include "projectile.hpp"
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_render.h>
+#include "camera.hpp"
 #include <vector>
 vector<projectile *> projectiles = {};
 bool renderLoop(const char *path) {
@@ -127,21 +128,22 @@ float hitTimer = 0.0f;
     float scale = 4.0f;
     int scaledScreenWidth = SCREEN_WIDTH / scale;
     int scaledScreenHeight = SCREEN_HEIGHT / scale;
-    if (!jump)
-      camera.y = player.kyPos + player.height() / 2 - scaledScreenHeight / 2;
-    camera.x = player.kxPos + player.width() / 2 - scaledScreenWidth / 2;
-
+    Vec2 playerPos = {
+    (float)player.xPos() + player.width() / 2.0f,
+    (float)player.yPos() + player.height() / 2.0f
+};
+    camera.Update(playerPos, 50.0f, 100.0f, 5.0f, deltaTime);
     // Clamp camera inside map bounds
-    if (camera.x < 0)
-      camera.x = 0;
-    if (camera.y < 0)
-      camera.y = 0;
-    if (camera.x > map_width_px - camera.w)
-      camera.x = map_width_px - camera.w;
-    if (camera.y > map_height_px - camera.h)
-      camera.y = map_height_px - camera.h;
-    camera.w = scaledScreenWidth;
-    camera.h = scaledScreenHeight;
+    if (camera.rect.x < 0)
+      camera.rect.x = 0;
+    if (camera.rect.y < 0)
+      camera.rect.y = 0;
+    if (camera.rect.x > map_width_px - camera.rect.w)
+      camera.rect.x = map_width_px - camera.rect.w;
+    if (camera.rect.y > map_height_px - camera.rect.h)
+      camera.rect.y = map_height_px - camera.rect.h;
+    camera.rect.w = scaledScreenWidth;
+    camera.rect.h = scaledScreenHeight;
 
     // Updates
 
@@ -149,7 +151,7 @@ float hitTimer = 0.0f;
 
 for (auto &enemy : enemies) {
     enemy.enemyUpdate(deltaTime, map);
-    SDL_Rect dst{enemy.rect.x - camera.x, enemy.rect.y - camera.y,
+    SDL_Rect dst{enemy.rect.x - camera.rect.x, enemy.rect.y - camera.rect.y,
                  enemy.rect.w, enemy.rect.h};
     enemy.texture.animateSprite(wRenderer, enemy.texture.getCols(),
                                 enemy.texture.getCells(), dst,
@@ -225,8 +227,8 @@ if (checkCollisionB(enemy.rect, *(player.getCollider()))) {
     bgSrcRect.h = SCREEN_HEIGHT;
 
     // Offset in background based on camera position
-    bgSrcRect.x = (int)(camera.x * parallaxFactorX) % bgTexW;
-    bgSrcRect.y = (int)(camera.y * parallaxFactorY) % bgTexH;
+    bgSrcRect.x = (int)(camera.rect.x * parallaxFactorX) % bgTexW;
+    bgSrcRect.y = (int)(camera.rect.y * parallaxFactorY) % bgTexH;
 
     if (bgSrcRect.x < 0)
       bgSrcRect.x += bgTexW;
@@ -289,7 +291,7 @@ if (isHit) {
     }
 
     for (auto e : enemies) {
-      SDL_Rect dst{e.rect.x - camera.x, e.rect.y - camera.y, e.rect.w,
+      SDL_Rect dst{e.rect.x - camera.rect.x, e.rect.y - camera.rect.y, e.rect.w,
                    e.rect.h};
       e.texture.animateSprite(wRenderer, e.texture.getCols(),
                               e.texture.getCells(), dst, e.texture.angle);

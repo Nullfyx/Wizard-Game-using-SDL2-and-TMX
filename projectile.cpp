@@ -37,7 +37,7 @@ projectile::projectile(int startX, int startY, int targetX, int targetY) {
     }
 
     // initial rect
-    proRect = { startX - camera.x, startY - camera.y, 6, 1 };
+    proRect = { startX - camera.rect.x, startY - camera.rect.y, 6, 1 };
 
     // start cooldown timer
     timer.start();
@@ -46,8 +46,8 @@ projectile::projectile(int startX, int startY, int targetX, int targetY) {
 void projectile::update() {
     physics.move();
 
-    proRect.x = (int)(physics.kxPos - camera.x);
-    proRect.y = (int)(physics.kyPos - camera.y);
+    proRect.x = (int)(physics.kxPos - camera.rect.x);
+    proRect.y = (int)(physics.kyPos - camera.rect.y);
 
     if(angle < 0) angle += 360.0f;  
     texture.render(wRenderer, nullptr, &proRect, -angle);

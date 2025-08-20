@@ -10,7 +10,7 @@ SDL_Window* wWindow = nullptr;
 SDL_Renderer* wRenderer = nullptr;
 
 // Camera start position & size
-SDL_Rect camera = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
+Camera camera(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
 // Player globals
 float playerVelX = 0.0f;
