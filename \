@@ -180,26 +180,22 @@ for (auto &enemy : enemies) {
         }
     }
 
-if (checkCollisionB(enemy.rect, *(player.getCollider()))) {
-    enemy.accDt += deltaTime;
+    if (checkCollisionB(enemy.rect, *(player.getCollider()))) {
+        enemy.accDt += deltaTime;
 
-    if (enemy.accDt >= enemy.cooldown) {
-        enemy.accDt = 0.0f;  // reset for *next* attack
+        if (!isDead && enemy.accDt >= enemy.cooldown) {
+            enemy.accDt = 0.0f;
+            int newLives = player.lives() - enemy.atk;
+            if (newLives < 0) newLives = 0;
+            player.setLives(newLives);
 
-        int newLives = player.lives() - enemy.atk;
-        if (newLives < 0) newLives = 0;
-        player.setLives(newLives);
-
-        if (newLives > 0) {
-            isHit = true;
-            hitTimer = 0.2f;
-            player.playerTexture.setColor(255, 0, 0);
+            if (newLives > 0) {
+                isHit = true;
+                hitTimer = 0.2f;
+                player.playerTexture.setColor(255, 0, 0);
+            }
         }
     }
-} else {
-    enemy.accDt = enemy.cooldown;  
-    // so next time player collides, attack triggers quickly
-}
 } 
     enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
                                  [](moving_tile &e) {
