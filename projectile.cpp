@@ -31,7 +31,7 @@ projectile::projectile(int startX, int startY, int targetX, int targetY) {
     angle = std::atan2(-dy, dx) * 180.0f / M_PI;
 
     if (dist != 0) {
-        float speed = 2.0f;
+        float speed = 4.0f;
         physics.kvelocityX = (dx / dist) * speed;
         physics.kvelocityY = (dy / dist) * speed;
     }

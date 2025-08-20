@@ -132,7 +132,7 @@ float hitTimer = 0.0f;
     (float)player.xPos() + player.width() / 2.0f,
     (float)player.yPos() + player.height() / 2.0f
 };
-    camera.Update(playerPos, 50.0f, 100.0f, 5.0f, deltaTime);
+    camera.Update(playerPos, 50.0f, 100.0f, 2.0f, deltaTime);
     // Clamp camera inside map bounds
     if (camera.rect.x < 0)
       camera.rect.x = 0;
