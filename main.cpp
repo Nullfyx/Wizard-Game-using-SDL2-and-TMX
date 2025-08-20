@@ -18,7 +18,7 @@ Player player;
 // main function
 int main(int argv, char *args[])
 {
-    const char *pathToTMX = "levels/6.tmx";
+    const char *pathToTMX = "levels/7.tmx";
     // initialize
     if (!init())
     {
