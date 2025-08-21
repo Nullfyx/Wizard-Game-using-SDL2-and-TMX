@@ -48,7 +48,7 @@ bool renderLoop(const char *path) {
   player.playerTexture.setFPS(4);
 
   // Load background texture once
-  SDL_Texture *backgroundTex = IMG_LoadTexture(wRenderer, "bg.png");
+  SDL_Texture *backgroundTex = IMG_LoadTexture(wRenderer, "bg1.png");
   if (!backgroundTex) {
     SDL_Log("Failed to load background texture: %s", SDL_GetError());
     tmx_map_free(map);
@@ -217,62 +217,27 @@ bool renderLoop(const char *path) {
     // Remove projectiles marked for destruction safely
     // Update player logic
     player.update(deltaTime);
-    // --- Parallax background rendering ---
 
-    // Parallax factor: smaller = slower movement
+    // --- Parallax background rendering (tiled) ---
     float parallaxFactorX = 0.4f;
     float parallaxFactorY = 0.3f;
 
-    // How much of the background we want to show on screen
-    // Keep it equal to screen size to avoid stretching
-    SDL_Rect bgSrcRect;
-    bgSrcRect.w = SCREEN_WIDTH;
-    bgSrcRect.h = SCREEN_HEIGHT;
+    // Offset background movement with camera
+    int offsetX = (int)(camera.rect.x * parallaxFactorX);
+    int offsetY = (int)(camera.rect.y * parallaxFactorY);
 
-    // Offset in background based on camera position
-    bgSrcRect.x = (int)(camera.rect.x * parallaxFactorX) % bgTexW;
-    bgSrcRect.y = (int)(camera.rect.y * parallaxFactorY) % bgTexH;
+    // Make the texture appear "smaller" by scaling down draw size
+    // Example: draw at half size -> background looks zoomed OUT
+    int scaleDown = 2; // try 2, 3, or 4 for more repeats
 
-    if (bgSrcRect.x < 0)
-      bgSrcRect.x += bgTexW;
-    if (bgSrcRect.y < 0)
-      bgSrcRect.y += bgTexH;
+    int tileW = bgTexW / scaleDown;
+    int tileH = bgTexH / scaleDown;
 
-    SDL_Rect bgDstRect = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
-
-    // Render background — handle wrap-around for X and Y
-    // Case 1: fits without wrap
-
-    if (bgSrcRect.x + bgSrcRect.w <= bgTexW &&
-        bgSrcRect.y + bgSrcRect.h <= bgTexH) {
-      SDL_RenderCopy(wRenderer, backgroundTex, &bgSrcRect, &bgDstRect);
-    }
-    // Case 2: Wrap horizontally or vertically
-    else {
-      // First chunk
-      SDL_Rect src1 = bgSrcRect;
-      SDL_Rect dst1 = bgDstRect;
-
-      // Adjust widths/heights for wrap
-      if (src1.x + src1.w > bgTexW)
-        src1.w = bgTexW - src1.x;
-      if (src1.y + src1.h > bgTexH)
-        src1.h = bgTexH - src1.y;
-
-      SDL_RenderCopy(wRenderer, backgroundTex, &src1, &dst1);
-
-      // Second chunk (horizontal wrap)
-      if (bgSrcRect.x + bgSrcRect.w > bgTexW) {
-        SDL_Rect src2 = {0, bgSrcRect.y, bgSrcRect.w - src1.w, src1.h};
-        SDL_Rect dst2 = {src1.w, 0, dst1.w - src1.w, dst1.h};
-        SDL_RenderCopy(wRenderer, backgroundTex, &src2, &dst2);
-      }
-
-      // Second chunk (vertical wrap)
-      if (bgSrcRect.y + bgSrcRect.h > bgTexH) {
-        SDL_Rect src3 = {bgSrcRect.x, 0, src1.w, bgSrcRect.h - src1.h};
-        SDL_Rect dst3 = {0, src1.h, dst1.w, dst1.h - src1.h};
-        SDL_RenderCopy(wRenderer, backgroundTex, &src3, &dst3);
+    // Loop through screen and tile the background
+    for (int y = -offsetY % tileH; y < SCREEN_HEIGHT; y += tileH) {
+      for (int x = -offsetX % tileW; x < SCREEN_WIDTH; x += tileW) {
+        SDL_Rect dst = {x, y, tileW, tileH};
+        SDL_RenderCopy(wRenderer, backgroundTex, NULL, &dst);
       }
     }
     if (isHit) {

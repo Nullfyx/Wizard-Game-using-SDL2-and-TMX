@@ -10,9 +10,9 @@
 int projectile::index = 0;
 
 projectile::projectile(int startX, int startY, int targetX, int targetY) {
-    std::cout << "start: " << startX << "  " << startY << std::endl;
-    std::cout << "end: " << targetX << "  " << targetY << std::endl;
-
+//    std::cout << "start: " << startX << "  " << startY << std::endl;
+//    std::cout << "end: " << targetX << "  " << targetY << std::endl;
+    
     texture.WIMG_Load("sprites/bolt.png");
     physics.kvelocityX = 0.0f;
     physics.kvelocityY = 0.0f;

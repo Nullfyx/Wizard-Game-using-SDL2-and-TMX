@@ -264,8 +264,8 @@ if (attack)
         float distSq = dx*dx + dy*dy;
         if (distSq < closestDist) {
             closestDist = distSq;
-            targetX = enemy.x;
-            targetY = enemy.y;
+            targetX = enemy.x + (enemy.width/2);
+            targetY = enemy.y + (enemy.height/2);
         }
     }
     // Create projectile with exact physics positions
