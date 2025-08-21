@@ -130,7 +130,7 @@ bool renderLoop(const char *path) {
     int scaledScreenHeight = SCREEN_HEIGHT / scale;
     Vec2 playerPos = {(float)player.xPos() + player.width() / 2.0f,
                       (float)player.yPos() + player.height() / 2.0f};
-    camera.Update(playerPos, 50.0f, 30.0f, 5.0f, deltaTime);
+    camera.Update(playerPos, 50.0f, 20.0f, 5.0f, deltaTime);
     // Clamp camera inside map bounds
     if (camera.rect.x < 0)
       camera.rect.x = 0;
