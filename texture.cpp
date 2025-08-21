@@ -115,19 +115,22 @@ void WTexture::animateSprite(SDL_Renderer *wRenderer, int cols, int cells, SDL_R
 
     if (animationTimer.getTicks() >= frameDelay)
     {
-        frame = (frame + 1) % cells;
+        frame = (frame + 1) % (cells!=0?cells:1);
         animationTimer.start(); // Reset the timer
     }
 
-    int rows = cells / cols;
-    int frameWidth = wWidth / cols;
-    int frameHeight = wHeight / rows;
+    int rows = 1;
+        SDL_Rect srcRect;
 
-    SDL_Rect srcRect;
+        int frameWidth, frameHeight;
+    if(cols != 0){rows = cells / cols;
+    frameWidth = wWidth / cols;
+    frameHeight = wHeight / rows;
+
     srcRect.x = (frame % cols) * frameWidth;
     srcRect.y = (frame / cols) * frameHeight;
     srcRect.w = frameWidth;
-    srcRect.h = frameHeight;
+    srcRect.h = frameHeight;}
 
     render(wRenderer, &srcRect,&destRect, angle, center, flip);
 }

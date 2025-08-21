@@ -206,6 +206,28 @@ void moving_tile::move(unsigned int dt_ms, tmx_map *map) {
     if (wallLeft)
       patrolDir = 1;
   }
+// ===== CLIFF / LEDGE DETECTION =====
+if (onGround) {
+  int aheadX = static_cast<int>((x + (moveRight ? map->tile_width : -map->tile_width)) / map->tile_width);
+  int aheadY = static_cast<int>((y + map->tile_height) / map->tile_height);
+
+  bool groundAhead = isWalkable(map, aheadX, aheadY);
+
+  // Only care about ledge if player is NOT below
+  bool playerBelow = (playerY > y);
+
+  if (!groundAhead && !playerBelow) {
+    if (moveRight) {
+      moveRight = false;
+      moveLeft = true;
+      patrolDir = -1;
+    } else if (moveLeft) {
+      moveLeft = false;
+      moveRight = true;
+      patrolDir = 1;
+    }
+  }
+}
 
   // ===== APPLY FORCES =====
   if (moveLeft)

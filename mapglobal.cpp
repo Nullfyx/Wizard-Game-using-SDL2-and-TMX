@@ -7,6 +7,10 @@ tmx_map *map = NULL;
 void build_enemies_from_map(tmx_map *map)
 {
     auto layer = map->ly_head;
+    if(!strcmp(layer->name , "Tile Layer 2"))
+    {
+      layer = layer->next;
+    }
     if(layer->type == L_LAYER)
     {
     unsigned int gid, x, y, w, h, flags;
