@@ -4,6 +4,7 @@
 #include <SDL2/SDL_log.h>
 #include <SDL2/SDL_render.h>
 // constructor
+int WTexture::fps = 8; 
 WTexture::WTexture()
 {
     // clear garbage values

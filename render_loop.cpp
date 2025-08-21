@@ -1,18 +1,18 @@
 
 #include "render_loop.hpp"
 #include "bounding_box.hpp"
+#include "camera.hpp"
 #include "globals.hpp"
 #include "map.hpp"
 #include "mapglobal.hpp"
 #include "projectile.hpp"
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_render.h>
-#include "camera.hpp"
 #include <vector>
 vector<projectile *> projectiles = {};
 bool renderLoop(const char *path) {
-bool isHit = false;
-float hitTimer = 0.0f;
+  bool isHit = false;
+  float hitTimer = 0.0f;
 
   bool incDt = false;
   float jumpTimer = 0.0f;
@@ -46,7 +46,7 @@ float hitTimer = 0.0f;
   player.playerTexture.setCells(cells);
   player.playerTexture.setCols(cols);
   player.playerTexture.setFPS(4);
-  
+
   // Load background texture once
   SDL_Texture *backgroundTex = IMG_LoadTexture(wRenderer, "bg.png");
   if (!backgroundTex) {
@@ -128,11 +128,9 @@ float hitTimer = 0.0f;
     float scale = 4.0f;
     int scaledScreenWidth = SCREEN_WIDTH / scale;
     int scaledScreenHeight = SCREEN_HEIGHT / scale;
-    Vec2 playerPos = {
-    (float)player.xPos() + player.width() / 2.0f,
-    (float)player.yPos() + player.height() / 2.0f
-};
-    camera.Update(playerPos, 50.0f, 100.0f, 5.0f, deltaTime);
+    Vec2 playerPos = {(float)player.xPos() + player.width() / 2.0f,
+                      (float)player.yPos() + player.height() / 2.0f};
+    camera.Update(playerPos, 50.0f, 30.0f, 5.0f, deltaTime);
     // Clamp camera inside map bounds
     if (camera.rect.x < 0)
       camera.rect.x = 0;
@@ -149,60 +147,65 @@ float hitTimer = 0.0f;
 
     // Update enemies and check collisions
 
-for (auto &enemy : enemies) {
-    enemy.enemyUpdate(deltaTime, map);
-    SDL_Rect dst{enemy.rect.x - camera.rect.x, enemy.rect.y - camera.rect.y,
-                 enemy.rect.w, enemy.rect.h};
-    enemy.texture.animateSprite(wRenderer, enemy.texture.getCols(),
-                                enemy.texture.getCells(), dst,
-                                enemy.texture.angle);
+    for (auto &enemy : enemies) {
+      enemy.enemyUpdate(deltaTime, map);
+      SDL_Rect dst{enemy.rect.x - camera.rect.x, enemy.rect.y - camera.rect.y,
+                   enemy.rect.w, enemy.rect.h};
+      enemy.texture.animateSprite(wRenderer, enemy.texture.getCols(),
+                                  enemy.texture.getCells(), dst,
+                                  enemy.texture.angle);
 
-    // enemy death fade out...
-    Uint8 a;
-    enemy.texture.readAlpha(a);
-    if (enemy.health <= 0) {
+      // enemy death fade out...
+      Uint8 a;
+      enemy.texture.readAlpha(a);
+      if (enemy.health <= 0) {
         if (enemy.texture.angle < 90) {
-            enemy.texture.angle += 5;
+          enemy.texture.angle += 5;
         }
         if ((float)a > 0) {
-            a -= 5;
-            if ((float)a < 0) a = 0;
+          a -= 5;
+          if ((float)a < 0)
+            a = 0;
         }
         enemy.texture.setAlpha(a);
-    }
+      }
 
-    // projectile collisions
-    for (auto &pro : projectiles) {
-        if (!pro) continue;
+      // projectile collisions
+      for (auto &pro : projectiles) {
+        if (!pro)
+          continue;
         if (checkCollisionB(dst, pro->proRect)) {
-            enemy.health -= pro->power;
-            if (enemy.health < 0) enemy.health = 0;
-            if (enemy.health > 10) enemy.health = 10;
-            pro->destroyMe = true;
+          enemy.health -= pro->power;
+          if (enemy.health < 0)
+            enemy.health = 0;
+          if (enemy.health > 10)
+            enemy.health = 10;
+          pro->destroyMe = true;
         }
-    }
+      }
 
-if (checkCollisionB(enemy.rect, *(player.getCollider()))) {
-    enemy.accDt += deltaTime;
+      if (checkCollisionB(enemy.rect, *(player.getCollider()))) {
+        enemy.accDt += deltaTime;
 
-    if (enemy.accDt >= enemy.cooldown) {
-        enemy.accDt = 0.0f;  // reset for *next* attack
+        if (enemy.accDt >= enemy.cooldown) {
+          enemy.accDt = 0.0f; // reset for *next* attack
 
-        int newLives = player.lives() - enemy.atk;
-        if (newLives < 0) newLives = 0;
-        player.setLives(newLives);
+          int newLives = player.lives() - enemy.atk;
+          if (newLives < 0)
+            newLives = 0;
+          player.setLives(newLives);
 
-        if (newLives > 0) {
+          if (newLives > 0) {
             isHit = true;
             hitTimer = 0.2f;
             player.playerTexture.setColor(255, 0, 0);
+          }
         }
+      } else {
+        enemy.accDt = enemy.cooldown;
+        // so next time player collides, attack triggers quickly
+      }
     }
-} else {
-    enemy.accDt = enemy.cooldown;  
-    // so next time player collides, attack triggers quickly
-}
-} 
     enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
                                  [](moving_tile &e) {
                                    Uint8 a;
@@ -247,7 +250,7 @@ if (checkCollisionB(enemy.rect, *(player.getCollider()))) {
     // Case 2: Wrap horizontally or vertically
     else {
       // First chunk
-       SDL_Rect src1 = bgSrcRect;
+      SDL_Rect src1 = bgSrcRect;
       SDL_Rect dst1 = bgDstRect;
 
       // Adjust widths/heights for wrap
@@ -272,13 +275,13 @@ if (checkCollisionB(enemy.rect, *(player.getCollider()))) {
         SDL_RenderCopy(wRenderer, backgroundTex, &src3, &dst3);
       }
     }
-if (isHit) {
-  hitTimer -= deltaTime;
-  if (hitTimer <= 0.0f) {
-    isHit = false;
-    player.playerTexture.setColor(255, 255, 255); // back to normal
-  }
-}
+    if (isHit) {
+      hitTimer -= deltaTime;
+      if (hitTimer <= 0.0f) {
+        isHit = false;
+        player.playerTexture.setColor(255, 255, 255); // back to normal
+      }
+    }
 
     // Render map and actors
     render_map(map);

@@ -21,8 +21,7 @@ class WTexture
     // spritesheet data
     int wCols;
     int wCells;
-    int fps; // optional
-
+    static int fps;
 public:
     // constructor
     WTexture();
