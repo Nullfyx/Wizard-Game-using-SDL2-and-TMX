@@ -10,7 +10,7 @@ Player::Player() {
   wLives = 9; // maybe its a cat!
   wXPos = 0;
   isGrounded = false;
-  wYPos = 180;
+  wYPos = 0;
   wXVel = 0;
   wGravityVel = (wWeight / gravity.g()) * dt * 10;
   wYVel = wGravityVel;
