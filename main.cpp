@@ -17,7 +17,7 @@ bool shouldRestart = false;
 Player player;
 // main function
 int main(int argv, char *args[]) {
-  const char *pathToTMX = "levels/4.tmx";
+  const char *pathToTMX = "levels/3.tmx";
   // initialize
   if (!init()) {
     cout << "Error initializing subsystems!" << endl;
