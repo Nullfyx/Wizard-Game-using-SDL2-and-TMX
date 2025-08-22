@@ -15,7 +15,6 @@ bool renderLoop(const char *path) {
   float hitTimer = 0.0f;
 
   bool incDt = false;
-  float jumpTimer = 0.0f;
   SDL_Event e;
   bool quit = false;
   bool isDead = false;
@@ -69,10 +68,10 @@ bool renderLoop(const char *path) {
     lastTicks = currentTicks;
 
     if (jump) {
-      jumpTimer += deltaTime;
-      if (jumpTimer >= 0.5f) { // half-second jump
+    player.jumpTimer += deltaTime;
+      if (player.jumpTimer >= 0.5f) { // half-second jump
         jump = false;
-        jumpTimer = 0.0f;
+        player.jumpTimer = 0.0f;
       }
     }
     // Input handling

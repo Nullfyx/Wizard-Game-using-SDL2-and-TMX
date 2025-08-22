@@ -75,6 +75,7 @@ public:
   bool isRoofed;
   bool isRightObstructed;
   bool isLeftObstructed;
+  float jumpTimer;
   // getters and setters
   int width();
 
