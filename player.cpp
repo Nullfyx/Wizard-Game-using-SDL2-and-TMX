@@ -25,6 +25,7 @@ Player::Player()
     isLeftObstructed = false;
     accDt = 0;
     cooldown = 0.5;
+    playerRect = {0, 0, 0, 0};
 };
 
 // getters and setters (all)
