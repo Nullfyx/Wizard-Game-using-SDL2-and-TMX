@@ -36,7 +36,7 @@ public:
     void textTex(string str, TTF_Font *wFont, SDL_Color wColor, SDL_Renderer *wRenderer);
 
     // animated sprite
-    void animateSprite(SDL_Renderer *wRenderer, int cols, int cells, SDL_Rect destRect, double angle = 0.0, SDL_Point *center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE);
+    void animateSprite(SDL_Renderer *wRenderer, int cols, int cells, SDL_Rect *destRect, double angle = 0.0, SDL_Point *center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE);
 
     // render the texture
     void render(SDL_Renderer *renderer, SDL_Rect *srcRect, SDL_Rect *destRect, double angle = 0.0, SDL_Point *center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE);

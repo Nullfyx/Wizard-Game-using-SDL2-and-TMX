@@ -36,7 +36,7 @@ bool renderLoop(const char *path) {
   std::string src = "sprites/wizard/wizard2.png";
   std::string rightSrc = "sprites/wizard/wizard2.png";
   std::string leftSrc = "sprites/wizard/wizard2-flip.png";
-
+  
   player.playerTexture.setFPS(30);
   int cols = 4;
   int cells = 4;
@@ -114,6 +114,10 @@ bool renderLoop(const char *path) {
         }
       }
     }
+    if(jump && moveLeft)
+    {
+      player.playerTexture.WIMG_Load(leftSrc);
+    }
     if (incDt) {
       player.accDt += deltaTime;
     }
@@ -152,7 +156,7 @@ bool renderLoop(const char *path) {
       SDL_Rect dst{enemy.rect.x - camera.rect.x, enemy.rect.y - camera.rect.y,
                    enemy.rect.w, enemy.rect.h};
       enemy.texture.animateSprite(wRenderer, enemy.texture.getCols(),
-                                  enemy.texture.getCells(), dst,
+                                  enemy.texture.getCells(), &dst,
                                   enemy.texture.angle);
 
       // enemy death fade out...
@@ -265,7 +269,7 @@ bool renderLoop(const char *path) {
       SDL_Rect dst{e.rect.x - camera.rect.x, e.rect.y - camera.rect.y, e.rect.w,
                    e.rect.h};
       e.texture.animateSprite(wRenderer, e.texture.getCols(),
-                              e.texture.getCells(), dst, e.texture.angle);
+                              e.texture.getCells(), &dst, e.texture.angle);
     }
     playerX = player.kxPos;
     playerY = player.kyPos;

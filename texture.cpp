@@ -99,7 +99,7 @@ void WTexture::textTex(string str, TTF_Font *wFont, SDL_Color wColor, SDL_Render
 }
 
 // animate the sprite
-void WTexture::animateSprite(SDL_Renderer *wRenderer, int cols, int cells, SDL_Rect destRect, double angle, SDL_Point *center, SDL_RendererFlip flip)
+void WTexture::animateSprite(SDL_Renderer *wRenderer, int cols, int cells, SDL_Rect *destRect, double angle, SDL_Point *center, SDL_RendererFlip flip)
 {
     static int frame = 0;
     static Timer animationTimer;
@@ -132,7 +132,7 @@ void WTexture::animateSprite(SDL_Renderer *wRenderer, int cols, int cells, SDL_R
     srcRect.w = frameWidth;
     srcRect.h = frameHeight;}
 
-    render(wRenderer, &srcRect,&destRect, angle, center, flip);
+    render(wRenderer, &srcRect, destRect, angle, center, flip);
 }
 
 // render the texture

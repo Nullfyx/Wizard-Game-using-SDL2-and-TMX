@@ -337,7 +337,7 @@ if (attack)
         playerRect.h
     };
     
-    playerTexture.animateSprite(wRenderer, playerTexture.getCols(), playerTexture.getCells(), screenRect, rotate, NULL, flip);
+    playerTexture.animateSprite(wRenderer, playerTexture.getCols(), playerTexture.getCells(), &screenRect, rotate, NULL, flip);
 }
 
 void Player::update(float d)

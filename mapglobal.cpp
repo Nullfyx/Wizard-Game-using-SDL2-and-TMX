@@ -86,7 +86,7 @@ if (imgSrc) {
     e.texture.setCells(4);
     e.rect = {(int)tile->ul_x, (int)tile->ul_y, (int)tile->width,(int) tile-> height};
     //e.rect = {(int)e.x, (int)e.y, e.width, e.height};
-    e.texture.animateSprite(wRenderer, e.texture.getCols(), e.texture.getCells(), e.rect);
+    e.texture.animateSprite(wRenderer, e.texture.getCols(), e.texture.getCells(), &e.rect);
 
 } else {
     std::cout << "Warning: No image found for tile GID " << gid << "\n";

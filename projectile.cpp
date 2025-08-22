@@ -37,7 +37,7 @@ projectile::projectile(int startX, int startY, int targetX, int targetY) {
     }
 
     // initial rect
-    proRect = { startX - camera.rect.x, startY - camera.rect.y, 6, 1 };
+    proRect = { startX - camera.rect.x, startY - camera.rect.y, 16, 3 };
 
     // start cooldown timer
     timer.start();
@@ -50,8 +50,8 @@ void projectile::update() {
     proRect.y = (int)(physics.kyPos - camera.rect.y);
 
     if(angle < 0) angle += 360.0f;  
-    texture.render(wRenderer, nullptr, &proRect, -angle);
-
+    //texture.render(wRenderer, nullptr, &proRect, -angle);
+    texture.animateSprite(wRenderer, 4, 4, &proRect, -angle);
     SDL_Rect futureRect = { (int)(physics.kxPos + physics.kvelocityX),
                             (int)(physics.kyPos + physics.kvelocityY),
                             proRect.w, proRect.h };
