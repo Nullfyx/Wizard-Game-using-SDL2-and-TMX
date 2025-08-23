@@ -1,3 +1,0 @@
-/home/Taran/Documents/gamedev/Wizard-Game-using-SDL2-and-TMX/build/CMakeFiles/wiz.dir
-/home/Taran/Documents/gamedev/Wizard-Game-using-SDL2-and-TMX/build/CMakeFiles/edit_cache.dir
-/home/Taran/Documents/gamedev/Wizard-Game-using-SDL2-and-TMX/build/CMakeFiles/rebuild_cache.dir
