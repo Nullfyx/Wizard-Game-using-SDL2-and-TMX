@@ -32,23 +32,31 @@ Camera::Camera(int x, int y, int w, int h) {
   rect.w = w;
   rect.h = h;
 }
-
 void Camera::Update(const Vec2 &target, float followHeight, float followRadius,
                     float followSpeed, float deltaTime) {
   Vec2 cameraPos = {static_cast<float>(rect.x), static_cast<float>(rect.y)};
-
-  // Use rect.w/h directly (they’re already scaled before calling Update)
   Vec2 targetPos = {target.x - rect.w / 2.0f,
                     target.y - rect.h / 2.0f + followHeight};
 
   Vec2 diff = targetPos - cameraPos;
-  Vec2 normal = diff.normalized();
+  float distance = diff.magnitude();
 
-  float dist = (normal.x != 0.0f) ? diff.x / normal.x : diff.magnitude();
-  float moveDist = ClampBottom(dist, followRadius) - followRadius;
+  // Only move if distance exceeds followRadius + small epsilon
+  const float epsilon = 0.5f; // small buffer to avoid jitter
+  if (distance > followRadius + epsilon) {
+    Vec2 direction = diff.normalized();
+    float excess = distance - followRadius;
 
-  Vec2 newPos = cameraPos + normal * moveDist * followSpeed * deltaTime;
+    // Smooth movement
+    float smoothFactor = 1.0f - std::exp(-followSpeed * deltaTime);
+    Vec2 move = direction * excess * smoothFactor;
 
-  rect.x = static_cast<int>(newPos.x);
-  rect.y = static_cast<int>(newPos.y);
+    // Apply movement only if significant
+    if (move.magnitude() > epsilon) {
+      cameraPos = cameraPos + move;
+    }
+  }
+
+  rect.x = static_cast<int>(cameraPos.x);
+  rect.y = static_cast<int>(cameraPos.y);
 }
