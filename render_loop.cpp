@@ -35,7 +35,7 @@ bool renderLoop(const char *path) {
   std::string src = "sprites/wizard/wizard2.png";
   std::string rightSrc = "sprites/wizard/wizard2.png";
   std::string leftSrc = "sprites/wizard/wizard2-flip.png";
-  
+
   player.playerTexture.setFPS(30);
   int cols = 4;
   int cells = 4;
@@ -68,7 +68,7 @@ bool renderLoop(const char *path) {
     lastTicks = currentTicks;
 
     if (jump) {
-    player.jumpTimer += deltaTime;
+      player.jumpTimer += deltaTime;
       if (player.jumpTimer >= 0.5f) { // half-second jump
         jump = false;
         player.jumpTimer = 0.0f;
@@ -113,8 +113,7 @@ bool renderLoop(const char *path) {
         }
       }
     }
-    if(jump && moveLeft)
-    {
+    if (jump && moveLeft) {
       player.playerTexture.WIMG_Load(leftSrc);
     }
     if (incDt) {

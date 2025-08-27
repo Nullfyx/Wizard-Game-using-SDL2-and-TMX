@@ -168,5 +168,8 @@ public:
 
   // jump
   void jump();
+
+  // log
+  void print();
 };
 #endif

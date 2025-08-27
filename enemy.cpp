@@ -77,7 +77,7 @@ std::vector<std::pair<int, int>> astarPath(tmx_map *map, int startX, int startY,
     return tx >= 0 && tx < w && ty >= 0 && ty < h;
   };
   if (!inBounds(startX, startY) || !inBounds(goalX, goalY)) {
-    SDL_Log("Pathfinding aborted: out of bounds");
+    // SDL_Log("Pathfinding aborted: out of bounds");
     return {};
   }
 

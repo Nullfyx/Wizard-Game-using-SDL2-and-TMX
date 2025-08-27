@@ -104,6 +104,16 @@ void Player::setMap(tmx_map *m) {
 void Player::setisGrounded(bool u) { isGrounded = u; }
 
 void Player::setJumping(bool j) { jumping = j; }
+void Player::print() {
+  cout << "xPos: " << kxPos << " " << wXPos << endl;
+  cout << "yPos: " << kyPos << " " << wYPos << endl;
+  cout << "xVel: " << kvelocityX << endl;
+  cout << "yVel: " << kvelocityY << endl;
+  cout << "ForceX: " << kforceX << endl;
+  cout << "ForceY: " << kforceY << endl;
+  cout << "AccX: " << kaccelerationX << endl;
+  cout << "AccY: " << kaccelerationY << endl;
+}
 void Player::moveRender(bool moveRight, bool moveLeft, bool jump, bool attack,
                         vector<projectile *> &projectiles) {
 
@@ -145,8 +155,10 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump, bool attack,
   if (moveRight) {
     applyForce(1000, 0);
   }
-  if (jump && onGround && jumpTimer < 0.1f) {
+  if (jump && onGround && jumpTimer < 0.1f && !overlapping) {
     applyForce(0, -4900); // instant upward push
+  } else if (overlapping) {
+    applyForce(0, -5);
   }
   if (attack) {
     // Pick nearest enemy at spawn
@@ -202,6 +214,7 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump, bool attack,
   kmaxVel = wMaxVel;
   // ===== PHYSICS MOVE =====
   move();
+  // print();
   for (int i = projectiles.size() - 1; i >= 0; --i) {
     if (projectiles[i]->destroyMe) {
       delete projectiles[i];
