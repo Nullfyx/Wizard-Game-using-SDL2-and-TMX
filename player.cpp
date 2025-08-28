@@ -259,3 +259,34 @@ void Player::jump() {
     jumping = true;
   }
 }
+void Player::lifeUpdate() {
+  int totalLives = 9;
+  float displayedLives = (float)wLives;
+  // Animate toward actual lives
+  if (displayedLives > wLives) {
+    displayedLives -= 0.05f; // speed of animation (tweak value)
+    if (displayedLives < wLives)
+      displayedLives = (float)wLives;
+  } else if (displayedLives < wLives) {
+    displayedLives += 0.05f; // in case you want healing animation too
+    if (displayedLives > wLives)
+      displayedLives = (float)wLives;
+  }
+
+  // Bar settings
+  int barWidth = (SCREEN_WIDTH) / 4 - 32;
+  int barHeight = 1;
+  int x = 16, y = 16;
+
+  // Background
+  SDL_Rect lifeBg = {x, y, barWidth, barHeight};
+  SDL_SetRenderDrawColor(wRenderer, 100, 100, 100, 255);
+  SDL_RenderFillRect(wRenderer, &lifeBg);
+
+  // Calculate proportional width using displayedLives
+  float healthPercent = displayedLives / totalLives;
+  SDL_Rect lifeFill = {x, y, (int)(barWidth * healthPercent), barHeight};
+
+  SDL_SetRenderDrawColor(wRenderer, 0, 255, 0, 255);
+  SDL_RenderFillRect(wRenderer, &lifeFill);
+}

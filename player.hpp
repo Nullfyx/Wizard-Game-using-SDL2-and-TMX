@@ -171,5 +171,8 @@ public:
 
   // log
   void print();
+
+  // lifeBar
+  void lifeUpdate();
 };
 #endif

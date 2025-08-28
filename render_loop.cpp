@@ -3,6 +3,7 @@
 #include "bounding_box.hpp"
 #include "camera.hpp"
 #include "globals.hpp"
+#include "lightSystem.hpp"
 #include "map.hpp"
 #include "mapglobal.hpp"
 #include "projectile.hpp"
@@ -13,7 +14,7 @@ vector<projectile *> projectiles = {};
 bool renderLoop(const char *path) {
   bool isHit = false;
   float hitTimer = 0.0f;
-
+  LightSystem l;
   bool incDt = false;
   SDL_Event e;
   bool quit = false;
@@ -66,6 +67,9 @@ bool renderLoop(const char *path) {
     float deltaTime = (currentTicks - lastTicks) /
                       1000.0f; // seconds elapsed since last frame
     lastTicks = currentTicks;
+    if (LightSystem::active) {
+      LightSystem::active->clearLights();
+    }
 
     if (jump) {
       player.jumpTimer += deltaTime;
@@ -273,6 +277,10 @@ bool renderLoop(const char *path) {
     }
     playerX = player.kxPos;
     playerY = player.kyPos;
+    if (LightSystem::active) {
+      LightSystem::active->render(wRenderer);
+    }
+    player.lifeUpdate();
     SDL_RenderPresent(wRenderer);
 
     // Cap frame rate (~60 FPS)
