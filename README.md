@@ -8,10 +8,14 @@ No Unity. No Unreal. Just raw code, physics, collisions, and tiled maps.
 - TMX map loading
 - Player animations
 - Custom game loop
+- Projectiles
+- Lighting system
 
 ## 📸 Screenshots
 
 ![ezgif-6d646561b220b6](https://github.com/user-attachments/assets/6f7e7c8f-5957-4d40-9ef3-d346fce2f910)
+
+
 
 ## 🛠️ Built With
 - C++
