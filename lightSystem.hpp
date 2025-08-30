@@ -1,6 +1,5 @@
 #ifndef LIGHTSYSTEM_HPP
 #define LIGHTSYSTEM_HPP
-
 #include <SDL2/SDL.h>
 #include <vector>
 
@@ -9,6 +8,7 @@ struct Light {
   float radius;
   float intensity;
   Uint8 r = 0, g = 0, b = 255; // default blue wizardly glow
+  float life = 1.0f;
 };
 
 class LightSystem {
@@ -22,9 +22,10 @@ public:
   LightSystem(int scale = 1, float tweakFactor = 2.0f);
   ~LightSystem();
 
-  void addLight(const Light &light);   // add a light this frame
-  void clearLights();                  // clear all lights (start of frame)
-  void render(SDL_Renderer *renderer); // render all lights
+  void addLight(const Light &light);
+  void clearLights();
+  void render(SDL_Renderer *renderer);
+  void update(float dt);
 };
 
 #endif // LIGHTSYSTEM_HPP

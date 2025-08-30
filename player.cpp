@@ -1,4 +1,6 @@
 #include "player.hpp"
+#include "globals.hpp"
+#include "particleSystem.hpp"
 #include "projectile.hpp"
 #include <SDL2/SDL_render.h>
 Player::Player() {
@@ -164,7 +166,7 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump, bool attack,
     // Pick nearest enemy at spawn
     float closestDist = FLT_MAX;
     float targetX = kxPos; // default to player if no enemies
-    float targetY = kyPos;
+    float targetY = kyPos; // setup
 
     for (const auto &enemy : enemies) {
       float dx = enemy.x - kxPos;
@@ -220,7 +222,7 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump, bool attack,
       delete projectiles[i];
       projectiles.erase(projectiles.begin() + i);
     } else {
-      projectiles[i]->update();
+      projectiles[i]->update(dt);
     }
   }
 
@@ -250,7 +252,7 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump, bool attack,
 
 void Player::update(float d) {
   // cout << isGrounded << endl;
-  dt = d;
+  dt = d > 0.18 ? 0.16 : d;
 }
 
 void Player::jump() {

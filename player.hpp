@@ -9,6 +9,7 @@
 #include "projectile.hpp"
 #include "texture.hpp"
 #include "timer.hpp"
+#include <algorithm>
 #include <iostream>
 #include <tmx.h>
 using namespace std;

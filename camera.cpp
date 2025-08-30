@@ -59,4 +59,8 @@ void Camera::Update(const Vec2 &target, float followHeight, float followRadius,
 
   rect.x = static_cast<int>(cameraPos.x);
   rect.y = static_cast<int>(cameraPos.y);
+  x = rect.x;
+  y = rect.y;
+  w = rect.w;
+  h = rect.h;
 }

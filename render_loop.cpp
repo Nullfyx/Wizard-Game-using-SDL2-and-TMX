@@ -6,6 +6,7 @@
 #include "lightSystem.hpp"
 #include "map.hpp"
 #include "mapglobal.hpp"
+#include "particleSystem.hpp"
 #include "projectile.hpp"
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_render.h>
@@ -15,6 +16,7 @@ bool renderLoop(const char *path) {
   bool isHit = false;
   float hitTimer = 0.0f;
   LightSystem l;
+  ParticleSystem particles(wRenderer, 4.0f);
   bool incDt = false;
   SDL_Event e;
   bool quit = false;
@@ -167,6 +169,7 @@ bool renderLoop(const char *path) {
       Uint8 a;
       enemy.texture.readAlpha(a);
       if (enemy.health <= 0) {
+
         if (enemy.texture.angle < 90) {
           enemy.texture.angle += 5;
         }
@@ -176,6 +179,15 @@ bool renderLoop(const char *path) {
             a = 0;
         }
         enemy.texture.setAlpha(a);
+        ParticleSystem::active->setSpeedRange(0.2f, 1.5f);
+        ParticleSystem::active->setLifeRange(0.1f, 0.3f);
+        ParticleSystem::active->setSizeRange(0.2f, 1.3f);
+        ParticleSystem::active->setBaseColor(255, 25, 25, 100);
+        ParticleSystem::active->setColorVariance(50);
+        float centerX = enemy.rect.x + enemy.rect.w / 2.0f;
+        float centerY = enemy.rect.y + enemy.rect.h / 2.0f;
+
+        ParticleSystem::active->emit(centerX, centerY, 3);
       }
 
       // projectile collisions
@@ -261,13 +273,39 @@ bool renderLoop(const char *path) {
     if (!isDead)
       player.moveRender(moveRight, moveLeft, jump, attack, projectiles);
     isDead = false;
-    if (player.lives() <= 0) {
+    if (player.lives() <= 0 || player.yPos() > map_height_px) {
+      float centerX = player.kxPos + player.width() / 2.0f;
+      float centerY = player.kyPos + player.height() / 2.0f;
+
+      if (ParticleSystem::active) {
+        ParticleSystem::active->setSpeedRange(0.5f, 5.0f);
+        ParticleSystem::active->setLifeRange(0.5f, 1.0f);
+        ParticleSystem::active->setSizeRange(1.0f, 6.0f);
+        ParticleSystem::active->setBaseColor(255, 255, 255, 255);
+        ParticleSystem::active->setColorVariance(50);
+        ParticleSystem::active->emit(centerX, centerY, 100);
+      }
+
+      // Animate particles for ~0.5 seconds
+      Uint32 start = SDL_GetTicks();
+      while (SDL_GetTicks() - start < 500) { // 500ms pause
+        float dt = 0.016f;                   // roughly 60 FPS
+        ParticleSystem::active->update(dt);
+        ParticleSystem::active->render(wRenderer, 3.0f, camera.x, camera.y);
+        SDL_RenderPresent(wRenderer);
+        SDL_Delay(16); // cap ~60 FPS
+      }
+
+      isDead = true;
       shouldRestart = true;
       break;
     }
-    if (player.yPos() > map->height * map->tile_height) {
-      shouldRestart = true;
-      break;
+
+    for (auto p : projectiles) {
+      if (p->proRect.x + p->proRect.w < 0 || p->proRect.x > SCREEN_WIDTH ||
+          p->proRect.y + p->proRect.h < 0 || p->proRect.y > SCREEN_HEIGHT) {
+        p->destroyMe = true;
+      }
     }
     for (auto e : enemies) {
       SDL_Rect dst{e.rect.x - camera.rect.x, e.rect.y - camera.rect.y, e.rect.w,
@@ -277,6 +315,10 @@ bool renderLoop(const char *path) {
     }
     playerX = player.kxPos;
     playerY = player.kyPos;
+    ParticleSystem::active->update(deltaTime);
+    LightSystem::active->update(deltaTime);
+
+    ParticleSystem::active->render(wRenderer, 3.0, camera.x, camera.y);
     if (LightSystem::active) {
       LightSystem::active->render(wRenderer);
     }

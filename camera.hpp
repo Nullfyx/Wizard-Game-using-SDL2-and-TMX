@@ -5,25 +5,30 @@
 #include <SDL2/SDL.h>
 
 struct Vec2 {
-    float x, y;
+  float x, y;
 
-    Vec2 operator-(const Vec2& other) const;
-    Vec2 operator+(const Vec2& other) const;
-    Vec2 operator*(float scalar) const;
+  Vec2 operator-(const Vec2 &other) const;
+  Vec2 operator+(const Vec2 &other) const;
+  Vec2 operator*(float scalar) const;
 
-    float magnitude() const;
-    Vec2 normalized() const;
+  float magnitude() const;
+  Vec2 normalized() const;
 };
 
 float ClampBottom(float val, float minVal);
 
 class Camera {
 public:
-    SDL_Rect rect;  // Camera viewport (x, y = top-left, w, h = screen size)
+  SDL_Rect rect; // Camera viewport (x, y = top-left, w, h = screen size)
 
-    Camera(int x, int y, int w, int h);
+  Camera(int x, int y, int w, int h);
 
-    void Update(const Vec2& target, float followHeight, float followRadius, float followSpeed, float deltaTime);
+  void Update(const Vec2 &target, float followHeight, float followRadius,
+              float followSpeed, float deltaTime);
+  int x;
+  int y;
+  int h;
+  int w;
 };
 
 #endif // CAMERA_HPP

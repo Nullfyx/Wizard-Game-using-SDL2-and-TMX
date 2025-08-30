@@ -4,6 +4,7 @@
 #include "globals.hpp"
 #include "lightSystem.hpp"
 #include "mapglobal.hpp"
+#include "particleSystem.hpp"
 #include <climits>
 #include <cmath>
 #include <iostream>
@@ -42,14 +43,24 @@ projectile::projectile(int startX, int startY, int targetX, int targetY) {
 
   // start cooldown timer:world
   timer.start();
+  timer.setTicks(cooldown * 1000);
 }
 
-void projectile::update() {
+void projectile::update(float dt) {
   physics.move();
 
   proRect.x = (int)(physics.kxPos - camera.rect.x);
   proRect.y = (int)(physics.kyPos - camera.rect.y);
-
+  ParticleSystem::active->setSpeedRange(0.2f, 1.5f);
+  ParticleSystem::active->setLifeRange(0.5f, 1.0f);
+  ParticleSystem::active->setSizeRange(0.1f, 0.8f);
+  ParticleSystem::active->setBaseColor(255, 255, 255, 1);
+  ParticleSystem::active->setColorVariance(50);
+  particleAccumulator += dt;
+  if (particleAccumulator >= 0.1f) {
+    ParticleSystem::active->emit(proRect.x + camera.x, proRect.y + camera.y, 4);
+    particleAccumulator = 0.0f;
+  }
   if (angle < 0)
     angle += 360.0f;
   // texture.render(wRenderer, nullptr, &proRect, -angle);
@@ -59,10 +70,10 @@ void projectile::update() {
     l.x = proRect.x + proRect.w / 2.0f;
     l.y = proRect.y + proRect.h / 2.0f;
     l.radius = 34;
-    l.intensity = 0.42f;
-    l.r = 90;
-    l.g = 8;
-    l.b = 100;
+    l.intensity = 0.2f;
+    l.r = 255;
+    l.g = 255;
+    l.b = 255;
 
     LightSystem::active->addLight(l);
   }
