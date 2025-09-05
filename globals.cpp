@@ -7,7 +7,8 @@ const int SCREEN_HEIGHT = 700;
 
 // SDL objects
 SDL_Window* wWindow = nullptr;
-SDL_Renderer* wRenderer = nullptr;
+ SDL_Renderer* 
+  wRenderer = nullptr;
 
 // Camera start position & size
 Camera camera(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);

@@ -87,7 +87,6 @@ void projectile::update(float dt) {
 // return true if enough time passed since last fire
 bool projectile::canFire() {
   Uint32 elapsedMs = timer.getTicks();
-  cout << elapsedMs << endl;
   if (elapsedMs >= (Uint32)(cooldown * 1000)) {
     timer.start(); // reset cooldown
     return true;

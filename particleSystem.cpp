@@ -70,13 +70,9 @@ void ParticleSystem::emit(float x, float y, int count) {
 
 void ParticleSystem::update(float dt) {
   if (particles.empty()) {
-    std::cout << "No particles to update.\n";
     return;
   }
 
-  if (!LightSystem::active) {
-    std::cout << "LightSystem not active, skipping light addition.\n";
-  }
   for (size_t i = 0; i < particles.size(); ++i) {
     auto &p = particles[i];
     p.x += p.vx * 60 * dt;
@@ -84,9 +80,7 @@ void ParticleSystem::update(float dt) {
     p.life -= dt;
 
     if (p.life <= 0) {
-      std::cout << "Particle " << i << " died! " << std::endl;
       if (LightSystem::active) {
-        std::cout << "light " << i << " died! " << std::endl;
         p.l.life = 0;
       }
       continue;
@@ -99,13 +93,10 @@ void ParticleSystem::update(float dt) {
 
     // Sanity check coordinates and alpha
     if (!std::isfinite(p.x) || !std::isfinite(p.y)) {
-      std::cout << "Particle " << i << " has invalid position (" << p.x << ", "
-                << p.y << ")\n";
       continue;
     }
 
     if (p.a == 0) {
-      std::cout << "Particle " << i << " alpha is zero, skipping light.\n";
       continue;
     }
 
@@ -122,15 +113,7 @@ void ParticleSystem::update(float dt) {
       p.l.b = p.b;
       p.l.life = p.life;
 
-      std::cout << "Adding light for particle " << i << ": Pos(" << p.l.x << ","
-                << p.l.y << ") "
-                << "Radius " << p.l.radius << " Intensity " << p.l.intensity
-                << " Color(RGB): (" << (int)p.l.r << "," << (int)p.l.g << ","
-                << (int)p.l.b << ")\n";
-
       LightSystem::active->addLight(p.l);
-    } else {
-      std::cout << "LightSystem inactive at particle " << i << "\n";
     }
   }
 
@@ -140,10 +123,6 @@ void ParticleSystem::update(float dt) {
                                  [](const Particle &p) { return p.life <= 0; }),
                   particles.end());
   size_t afterCount = particles.size();
-
-  if (beforeCount != afterCount)
-    std::cout << "Removed " << (beforeCount - afterCount)
-              << " dead particles.\n";
 }
 
 void ParticleSystem::render(SDL_Renderer *renderer, float zoom, float camX,

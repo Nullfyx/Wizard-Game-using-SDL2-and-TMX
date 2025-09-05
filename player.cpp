@@ -97,11 +97,7 @@ void Player::setGravityVel(double g) { wGravityVel = g; }
 
 void Player::setJumpPower(double p) { wJumpPower = p; }
 
-void Player::setMap(tmx_map *m) {
-  std::cout << "[DEBUG] Map set to player: " << m << std::endl;
-
-  map = m;
-}
+void Player::setMap(tmx_map *m) { map = m; }
 
 void Player::setisGrounded(bool u) { isGrounded = u; }
 

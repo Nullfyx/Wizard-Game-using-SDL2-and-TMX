@@ -1,7 +1,7 @@
 #include "lightSystem.hpp"
 #include "mapglobal.hpp"
 #include <SDL2/SDL_image.h>
-#include <algorithm> // 🔥 needed for std::remove_if
+#include <algorithm>
 #include <iostream>
 
 LightSystem *LightSystem::active = nullptr;
@@ -9,7 +9,7 @@ LightSystem *LightSystem::active = nullptr;
 LightSystem::LightSystem(int scale, float tweakFactor) {
   active = this;
 
-  const int texSize = 128;
+  const int texSize = 32;
   SDL_Surface *surf = SDL_CreateRGBSurface(0, texSize, texSize, 32, 0x00FF0000,
                                            0x0000FF00, 0x000000FF, 0xFF000000);
 
@@ -21,10 +21,10 @@ LightSystem::LightSystem(int scale, float tweakFactor) {
   Uint32 *pixels = (Uint32 *)surf->pixels;
   for (int y = 0; y < texSize; ++y) {
     for (int x = 0; x < texSize; ++x) {
-      float dx = x - texSize / 2;
-      float dy = y - texSize / 2;
+      float dx = x - (float)texSize / 2;
+      float dy = y - (float)texSize / 2;
       float dist = sqrtf(dx * dx + dy * dy);
-      float alpha = 1.0f - dist / (texSize / 2);
+      float alpha = 1.0f - dist / ((float)texSize / 2);
       if (alpha < 0)
         alpha = 0;
       Uint8 a = (Uint8)(alpha * 255);
@@ -49,13 +49,7 @@ LightSystem::~LightSystem() {
     active = nullptr;
 }
 
-void LightSystem::addLight(const Light &light) {
-  lights.push_back(light);
-  std::cout << "size: " << lights.size() << std::endl;
-  if (lights.size() > 1) {
-    std::cout << std::endl << lights[0].life << std::endl;
-  }
-}
+void LightSystem::addLight(const Light &light) { lights.push_back(light); }
 
 void LightSystem::clearLights() { lights.clear(); }
 
@@ -65,14 +59,7 @@ void LightSystem::render(SDL_Renderer *renderer) {
   SDL_Rect screen = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
   SDL_RenderFillRect(renderer, &screen);
 
-  std::cout << "Rendering " << lights.size() << " lights this frame:\n";
   for (auto &light : lights) {
-    std::cout << " Light: Pos=(" << light.x << ", " << light.y
-              << "), Radius=" << light.radius
-              << ", Intensity=" << light.intensity << ", Life=" << light.life
-              << ", Color=(R:" << (int)light.r << ",G:" << (int)light.g
-              << ",B:" << (int)light.b << ")\n";
-
     SDL_Rect dst{static_cast<int>(light.x - light.radius),
                  static_cast<int>(light.y - light.radius),
                  static_cast<int>(light.radius * 2),
@@ -86,12 +73,8 @@ void LightSystem::render(SDL_Renderer *renderer) {
 void LightSystem::update(float dt) {
   for (auto &l : lights) {
     l.life -= dt;
-    std::cout << "life: " << l.life << std::endl;
   }
   lights.erase(std::remove_if(lights.begin(), lights.end(),
-                              [](const Light &l) {
-                                std::cout << "removed: " << std::endl;
-                                return l.life <= 0;
-                              }),
+                              [](const Light &l) { return l.life <= 0; }),
                lights.end());
 }

@@ -233,7 +233,6 @@ bool renderLoop(const char *path) {
                                    return (e.health <= 0 && a <= 0);
                                  }),
                   enemies.end());
-    cout << player.lives() << endl;
     // Remove projectiles marked for destruction safely
     // Update player logic
     player.update(deltaTime);
