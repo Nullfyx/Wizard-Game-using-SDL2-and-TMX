@@ -3,7 +3,6 @@
 #include "player.hpp"
 #include "projectile.hpp"
 #include <SDL2/SDL_render.h>
-#include <SDL2/SDL_ttf.h>
 
 Player::Player() {
   wWidth = 20;
@@ -267,66 +266,6 @@ void Player::jump() {
     jumping = true;
   }
 }
-void Player::createManaCircleTexture() {
-  const int textureSize = 128;
-  const int radius = textureSize / 2 - 2; // margin inside texture
-
-  // Create an SDL surface for drawing
-  SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormat(
-      0, textureSize, textureSize, 32, SDL_PIXELFORMAT_RGBA32);
-  if (!surface) {
-    // handle error
-    return;
-  }
-
-  // Clear surface with transparent color
-  SDL_FillRect(surface, NULL, SDL_MapRGBA(surface->format, 0, 0, 0, 0));
-
-  SDL_LockSurface(surface);
-  Uint32 *pixels = (Uint32 *)surface->pixels;
-
-  Uint32 fillColor =
-      SDL_MapRGBA(surface->format, 0, 255, 255, 255); // cyan fill
-  Uint32 borderColor =
-      SDL_MapRGBA(surface->format, 255, 255, 255, 255); // white border
-
-  int cx = textureSize / 2;
-  int cy = textureSize / 2;
-
-  // Draw filled circle
-  for (int y = 0; y < textureSize; ++y) {
-    for (int x = 0; x < textureSize; ++x) {
-      int dx = x - cx;
-      int dy = y - cy;
-      float dist = sqrtf(dx * dx + dy * dy);
-      if (dist <= radius) {
-        pixels[y * (surface->pitch / 4) + x] = fillColor;
-      }
-    }
-  }
-  // Draw circle border (1 px thick)
-  for (int angle = 0; angle < 360; ++angle) {
-    float rad = angle * M_PI / 180.0f;
-    int px = (int)(cx + radius * cosf(rad));
-    int py = (int)(cy + radius * sinf(rad));
-    if (px >= 0 && px < textureSize && py >= 0 && py < textureSize) {
-      pixels[py * (surface->pitch / 4) + px] = borderColor;
-    }
-  }
-
-  SDL_UnlockSurface(surface);
-
-  // Create texture from surface
-  if (manaCircleTexture) {
-    SDL_DestroyTexture(manaCircleTexture);
-    manaCircleTexture = nullptr;
-  }
-  manaCircleTexture = SDL_CreateTextureFromSurface(wRenderer, surface);
-  SDL_SetTextureBlendMode(manaCircleTexture, SDL_BLENDMODE_BLEND);
-
-  SDL_FreeSurface(surface);
-}
-
 void Player::lifeUpdate() {
   int totalLives = 9;
   static float displayedLives = (float)wLives;
@@ -342,13 +281,15 @@ void Player::lifeUpdate() {
       displayedLives = (float)wLives;
   }
 
-  float uiScale = 0.25f;
+  // --- UI SCALE (to counter game zoom) ---
+  float uiScale = 0.25f; // since your game is 4x zoom, shrink HUD by 1/4
+
   int margin = (int)(16 * uiScale);
-  int barWidth = (int)(SCREEN_WIDTH * 0.85f * uiScale);
+  int barWidth = (int)(SCREEN_WIDTH * 0.7f * uiScale); // 70% screen, scaled
   int barHeight = (int)(20 * uiScale);
   int x = margin, y = margin;
 
-  // Life Bar
+  // --- Life Bar ---
   SDL_Rect lifeBg = {x, y, barWidth, barHeight};
   SDL_SetRenderDrawColor(wRenderer, 60, 60, 60, 255);
   SDL_RenderFillRect(wRenderer, &lifeBg);
@@ -358,53 +299,57 @@ void Player::lifeUpdate() {
   SDL_SetRenderDrawColor(wRenderer, 0, 200, 0, 255);
   SDL_RenderFillRect(wRenderer, &lifeFill);
 
-  // Mana logic
+  // --- Mana Circle ---
   auto getNextThreshold = [](int lvl) {
     int threshold = 0;
     for (int i = 1; i <= lvl; ++i)
       threshold += 8 + (i - 1) * 2;
     return threshold;
   };
-  int nextThreshold = getNextThreshold(*level);
-  if (*mana >= nextThreshold) {
-    *mana -= nextThreshold;
-    (*level)++;
-    nextThreshold = getNextThreshold(*level);
+
+  int nextThreshold = getNextThreshold(level);
+  if (mana >= nextThreshold) {
+    mana -= nextThreshold;
+    level++;
+    nextThreshold = getNextThreshold(level);
   }
-  float manaPercent = (float)*mana / nextThreshold;
+  float manaPercent = (float)mana / nextThreshold;
 
-  // Draw high-res mana circle texture scaled down to 20 pixels diameter
-  int circleDiameter = 20;
-  int circleRadius = circleDiameter / 2;
-  int circleX = (int)(SCREEN_WIDTH * uiScale) - circleRadius - margin;
-  int circleY = (int)(((y + barHeight) / 2) * uiScale) + circleRadius + margin;
+  int radius = (int)(32 * uiScale);
+  int circleX = (SCREEN_WIDTH * uiScale) - radius - margin;
+  int circleY = y + barHeight / 2 + radius + margin;
 
-  SDL_Rect dstRect = {circleX - circleRadius, circleY - circleRadius,
-                      circleDiameter, circleDiameter};
-
-  SDL_RenderCopy(wRenderer, manaCircleTexture, NULL, &dstRect);
-
-  // Draw filled arc for mana portion (overlay lines)
+  // Filled mana arc
   int segments = 60;
-  SDL_SetRenderDrawColor(wRenderer, 0, 255, 255, 255);
-  int endSegment = (int)(segments * manaPercent);
-  for (int i = 0; i < endSegment; ++i) {
+  for (int i = 0; i < (int)(segments * manaPercent); ++i) {
     float angle = 2.0f * M_PI * i / segments;
-    int px = (int)(circleX + circleRadius * cosf(angle));
-    int py = (int)(circleY + circleRadius * sinf(angle));
+    int px = (int)(circleX + radius * cos(angle));
+    int py = (int)(circleY + radius * sin(angle));
+    SDL_SetRenderDrawColor(wRenderer, 0, 0, 255, 255);
     SDL_RenderDrawLine(wRenderer, circleX, circleY, px, py);
   }
 
-  // Level text
+  // Circle border
+  for (int i = 0; i < 360; ++i) {
+    float rad = i * M_PI / 180.0f;
+    int px = (int)(circleX + radius * cos(rad));
+    int py = (int)(circleY + radius * sin(rad));
+    SDL_SetRenderDrawColor(wRenderer, 255, 255, 255, 255);
+    SDL_RenderDrawPoint(wRenderer, px, py);
+  }
+
+  // --- Level text ---
   SDL_Color white = {255, 255, 255, 255};
-  std::string levelText = std::to_string(*level);
+  std::string levelText = std::to_string(level);
   SDL_Surface *textSurface =
-      TTF_RenderText_Blended(font, levelText.c_str(), white);
+      TTF_RenderText_Solid(font, levelText.c_str(), white);
   SDL_Texture *textTex = SDL_CreateTextureFromSurface(wRenderer, textSurface);
+
   int textW, textH;
   SDL_QueryTexture(textTex, NULL, NULL, &textW, &textH);
   SDL_Rect dst = {circleX - textW / 2, circleY - textH / 2, textW, textH};
   SDL_RenderCopy(wRenderer, textTex, NULL, &dst);
+
   SDL_FreeSurface(textSurface);
   SDL_DestroyTexture(textTex);
 }

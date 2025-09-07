@@ -1,5 +1,4 @@
 
-#include "render_loop.hpp"
 #include "bounding_box.hpp"
 #include "camera.hpp"
 #include "globals.hpp"
@@ -8,14 +7,16 @@
 #include "mapglobal.hpp"
 #include "particleSystem.hpp"
 #include "projectile.hpp"
+#include "render_loop.hpp"
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_render.h>
+#include <SDL2/SDL_ttf.h>
 #include <vector>
 vector<projectile *> projectiles = {};
 bool renderLoop(const char *path) {
   bool isHit = false;
   float hitTimer = 0.0f;
-  LightSystem l;
+  LightSystem l(1, 0.5f);
   ParticleSystem particles(wRenderer, 4.0f);
   bool incDt = false;
   SDL_Event e;
@@ -48,7 +49,9 @@ bool renderLoop(const char *path) {
   player.playerTexture.setCells(cells);
   player.playerTexture.setCols(cols);
   player.playerTexture.setFPS(4);
-
+  font = TTF_OpenFont("./EpundaSlab-Regular.ttf", 12);
+  if (!font)
+    cout << "font couldn't be loaded! " << TTF_GetError() << endl;
   // Load background texture once
   SDL_Texture *backgroundTex = IMG_LoadTexture(wRenderer, "bg1.png");
   if (!backgroundTex) {
@@ -64,7 +67,6 @@ bool renderLoop(const char *path) {
   Uint32 lastTicks = SDL_GetTicks();
 
   while (!quit) {
-
     Uint32 currentTicks = SDL_GetTicks();
     float deltaTime = (currentTicks - lastTicks) /
                       1000.0f; // seconds elapsed since last frame
@@ -169,14 +171,15 @@ bool renderLoop(const char *path) {
       Uint8 a;
       enemy.texture.readAlpha(a);
       if (enemy.health <= 0) {
-
         if (enemy.texture.angle < 90) {
           enemy.texture.angle += 5;
         }
         if ((float)a > 0) {
           a -= 5;
-          if ((float)a < 0)
+          if ((float)a <= 0) {
             a = 0;
+            *mana += enemy.mana;
+          }
         }
         enemy.texture.setAlpha(a);
         ParticleSystem::active->setSpeedRange(0.2f, 1.5f);
@@ -186,7 +189,6 @@ bool renderLoop(const char *path) {
         ParticleSystem::active->setColorVariance(50);
         float centerX = enemy.rect.x + enemy.rect.w / 2.0f;
         float centerY = enemy.rect.y + enemy.rect.h / 2.0f;
-
         ParticleSystem::active->emit(centerX, centerY, 3);
       }
 
@@ -268,7 +270,7 @@ bool renderLoop(const char *path) {
     }
 
     // Render map and actors
-    render_map(map);
+    render_map(map, deltaTime);
     if (!isDead)
       player.moveRender(moveRight, moveLeft, jump, attack, projectiles);
     isDead = false;

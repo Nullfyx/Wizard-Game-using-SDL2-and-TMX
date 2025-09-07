@@ -67,7 +67,8 @@ class Player : public Kinematics {
 
   // check if the player is jumping
   bool jumping;
-
+// mana texture 
+  SDL_Texture* manaCircleTexture = nullptr;
 public:
   // constructor
   Player();
@@ -171,9 +172,13 @@ public:
   void jump();
 
   // log
-  void print();
+  void print(bool onGround, bool onCeiling, bool wallLeft, bool wallRight,
+                   bool overlapping); 
 
   // lifeBar
   void lifeUpdate();
+
+  //mana
+  void createManaCircleTexture();
 };
 #endif

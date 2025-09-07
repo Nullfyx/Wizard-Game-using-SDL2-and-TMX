@@ -1,14 +1,20 @@
 #include "mapglobal.hpp"
 #include <cstdint>
+#include <cstring>
+#include <iostream>
 #include <tmx.h>
 std::vector<moving_tile> enemies = {};
 std::unordered_set<uint64_t> tileSet = {};
 tmx_map *map = NULL;
 void build_enemies_from_map(tmx_map *map) {
   auto layer = map->ly_head;
-  if (!strcmp(layer->name, "Tile Layer 2")) {
+  while (layer) {
+    if (layer->type == L_LAYER && strcmp(layer->name, "Tile Layer 1") == 0) {
+      break;
+    }
     layer = layer->next;
   }
+  cout << layer->name << endl;
   if (layer->type == L_LAYER) {
     unsigned int gid, x, y, w, h, flags;
     tmx_tileset *ts;
@@ -28,7 +34,6 @@ void build_enemies_from_map(tmx_map *map) {
         tmx_tile *tile = tmx_get_tile(map, gid);
         if (!tile)
           continue;
-        std::cout << "Building enemies...\n";
         int count = 0;
         // Animated tile remap
         if (tile->animation_len > 0) {
@@ -68,6 +73,12 @@ void build_enemies_from_map(tmx_map *map) {
           e.physics.kvelocityY = e.vy;
           e.physics.kminVelX = 0.6;
           e.physics.timeOut = 0.5;
+          float mana = 0.0f;
+          tmx_property *m = tmx_get_property(tile->properties, "mana");
+          if (m && m->type == PT_FLOAT) {
+            mana = m->value.decimal;
+          }
+          e.mana = mana;
           e.id = key;
           tmx_tileset_list *tsl = map->ts_head;
           if (tsl) {

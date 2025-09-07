@@ -1,19 +1,28 @@
+// lightSystem.hpp
 #ifndef LIGHTSYSTEM_HPP
 #define LIGHTSYSTEM_HPP
+
 #include <SDL2/SDL.h>
 #include <vector>
 
 struct Light {
+  enum Shape { CIRCLE, RECTANGLE };
+
   float x, y;
-  float radius;
+  float radius;       // used as radius for circle or half width for rectangle
   float intensity;
-  Uint8 r = 0, g = 0, b = 255; // default blue wizardly glow
+  Uint8 r = 0, g = 0, b = 255; // default blue glow
   float life = 1.0f;
+  Shape shape = CIRCLE;  // default shape is circle
+
+  // For rectangle: radius corresponds to half width; height is set separately
+  float rectHeight = 0;  // Set only for RECTANGLE shape, 0 means square
 };
 
 class LightSystem {
 private:
-  SDL_Texture *gradientTex = nullptr; // radial gradient texture
+  SDL_Texture *gradientTexCircle = nullptr;    // circular radial gradient texture
+  SDL_Texture *gradientTexRectangle = nullptr; // rectangular gradient texture
   std::vector<Light> lights;
 
 public:
@@ -29,3 +38,4 @@ public:
 };
 
 #endif // LIGHTSYSTEM_HPP
+

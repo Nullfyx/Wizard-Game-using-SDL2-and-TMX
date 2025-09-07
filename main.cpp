@@ -28,6 +28,8 @@ int main(int argv, char *args[]) {
     shouldRestart = false;
     enemies = {};
     tileSet = {};
+    *level = 0;
+    *mana = 0;
     if (!renderLoop(pathToTMX)) {
       cout << "Error running the game loop!" << endl;
       return -1;
