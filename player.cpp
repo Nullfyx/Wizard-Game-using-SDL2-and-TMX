@@ -369,6 +369,7 @@ void Player::lifeUpdate() {
   if (*mana >= nextThreshold) {
     *mana -= nextThreshold;
     (*level)++;
+    draw = true;
     nextThreshold = getNextThreshold(*level);
   }
   float manaPercent = (float)*mana / nextThreshold;
@@ -394,7 +395,9 @@ void Player::lifeUpdate() {
     int py = (int)(circleY + circleRadius * sinf(angle));
     SDL_RenderDrawLine(wRenderer, circleX, circleY, px, py);
   }
-
+  if (draw) {
+    drawMenu();
+  }
   // Level text
   SDL_Color white = {255, 255, 255, 255};
   std::string levelText = std::to_string(*level);
@@ -407,4 +410,10 @@ void Player::lifeUpdate() {
   SDL_RenderCopy(wRenderer, textTex, NULL, &dst);
   SDL_FreeSurface(textSurface);
   SDL_DestroyTexture(textTex);
+}
+
+void Player::drawMenu() {
+  SDL_Rect drawRect = {8, 8, (SCREEN_WIDTH - 32) / 8, (SCREEN_HEIGHT - 32) / 8};
+  SDL_SetRenderDrawColor(wRenderer, 200, 200, 200, 255);
+  SDL_RenderFillRect(wRenderer, &drawRect);
 }

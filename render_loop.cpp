@@ -49,6 +49,7 @@ bool renderLoop(const char *path) {
   player.playerTexture.setCells(cells);
   player.playerTexture.setCols(cols);
   player.playerTexture.setFPS(4);
+  player.draw = false;
   font = TTF_OpenFont("./EpundaSlab-Regular.ttf", 12);
   if (!font)
     cout << "font couldn't be loaded! " << TTF_GetError() << endl;

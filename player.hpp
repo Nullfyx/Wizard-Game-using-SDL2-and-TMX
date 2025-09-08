@@ -69,9 +69,13 @@ class Player : public Kinematics {
   bool jumping;
 // mana texture 
   SDL_Texture* manaCircleTexture = nullptr;
+
 public:
   // constructor
   Player();
+    // draw flag
+  bool draw = false;
+
   double cooldown;
   double accDt;
   bool isRoofed;
@@ -180,5 +184,8 @@ public:
 
   //mana
   void createManaCircleTexture();
+
+  //menu
+  void drawMenu();
 };
 #endif
