@@ -10,6 +10,7 @@
 #include "texture.hpp"
 #include "timer.hpp"
 #include <algorithm>
+#include <cstdlib>
 #include <iostream>
 #include <tmx.h>
 using namespace std;
@@ -75,6 +76,10 @@ public:
   Player();
     // draw flag
   bool draw = false;
+int selectedCard = 0;
+bool menuActive = false;    // whether menu is open
+std::vector<SDL_Texture*> cardTextures;
+TTF_Font* uiFont = nullptr;
 
   double cooldown;
   double accDt;
@@ -187,5 +192,12 @@ public:
 
   //menu
   void drawMenu();
+
+  //selection of a card 
+void handleMenuEvent(const SDL_Event &e); 
+
+  //apply magic
+  void applyCardEffect(int cardIndex); 
 };
+
 #endif

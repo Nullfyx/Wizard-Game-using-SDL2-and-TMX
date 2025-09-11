@@ -50,7 +50,7 @@ bool renderLoop(const char *path) {
   player.playerTexture.setCols(cols);
   player.playerTexture.setFPS(4);
   player.draw = false;
-  font = TTF_OpenFont("./EpundaSlab-Regular.ttf", 12);
+  font = TTF_OpenFont("./PixelOperator.ttf", 16);
   if (!font)
     cout << "font couldn't be loaded! " << TTF_GetError() << endl;
   // Load background texture once
@@ -83,10 +83,12 @@ bool renderLoop(const char *path) {
         player.jumpTimer = 0.0f;
       }
     }
-    // Input handling
     while (SDL_PollEvent(&e)) {
       if (e.type == SDL_QUIT)
         quit = true;
+      player.handleMenuEvent(e);
+      // Input handling
+
       if (e.type == SDL_KEYDOWN && e.key.repeat == 0) {
         switch (e.key.keysym.sym) {
         case SDLK_LEFT:

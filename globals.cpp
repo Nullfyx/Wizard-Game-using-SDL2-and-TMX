@@ -4,7 +4,7 @@
 #include <exception>
 
 // Screen dimensions (define before camera uses them)
-const int SCREEN_WIDTH = 960;
+const int SCREEN_WIDTH = 1080;
 const int SCREEN_HEIGHT = 700;
 
 // SDL objects

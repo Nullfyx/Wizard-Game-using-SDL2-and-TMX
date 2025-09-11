@@ -2,7 +2,9 @@
 #include "particleSystem.hpp"
 #include "player.hpp"
 #include "projectile.hpp"
+#include <SDL2/SDL_image.h>
 #include <SDL2/SDL_render.h>
+#include <SDL2/SDL_surface.h>
 #include <SDL2/SDL_ttf.h>
 
 Player::Player() {
@@ -30,6 +32,17 @@ Player::Player() {
   cooldown = 0.5;
   playerRect = {0, 0, 0, 0};
   jumpTimer = 0.0f;
+  uiFont = TTF_OpenFont("./PixelOperator.ttf", 16);
+
+  SDL_Surface *s1 = IMG_Load("sprites/ui/clock.png");
+  SDL_Surface *s2 = IMG_Load("sprites/ui/greenHeart.png");
+  SDL_Surface *s3 = IMG_Load("sprites/ui/magic.png");
+  cardTextures = {SDL_CreateTextureFromSurface(wRenderer, s1),
+                  SDL_CreateTextureFromSurface(wRenderer, s2),
+                  SDL_CreateTextureFromSurface(wRenderer, s3)};
+  SDL_FreeSurface(s1);
+  SDL_FreeSurface(s2);
+  SDL_FreeSurface(s3);
 };
 
 // getters and setters (all)
@@ -304,7 +317,7 @@ void Player::createManaCircleTexture() {
       }
     }
   }
-  // Draw circle border (1 px thick)
+  // Draw circle border
   for (int angle = 0; angle < 360; ++angle) {
     float rad = angle * M_PI / 180.0f;
     int px = (int)(cx + radius * cosf(rad));
@@ -369,7 +382,9 @@ void Player::lifeUpdate() {
   if (*mana >= nextThreshold) {
     *mana -= nextThreshold;
     (*level)++;
-    draw = true;
+    if (*level > 1) {
+      draw = true;
+    }
     nextThreshold = getNextThreshold(*level);
   }
   float manaPercent = (float)*mana / nextThreshold;
@@ -398,6 +413,7 @@ void Player::lifeUpdate() {
   if (draw) {
     drawMenu();
   }
+  cout << draw << endl;
   // Level text
   SDL_Color white = {255, 255, 255, 255};
   std::string levelText = std::to_string(*level);
@@ -413,7 +429,75 @@ void Player::lifeUpdate() {
 }
 
 void Player::drawMenu() {
-  SDL_Rect drawRect = {8, 8, (SCREEN_WIDTH - 32) / 8, (SCREEN_HEIGHT - 32) / 8};
-  SDL_SetRenderDrawColor(wRenderer, 200, 200, 200, 255);
+  if (!draw)
+    return; // only draw if active
+
+  SDL_Rect drawRect = {8, 8, (SCREEN_WIDTH - 64) / 4, (SCREEN_HEIGHT - 64) / 4};
+  SDL_SetRenderDrawColor(wRenderer, 50, 50, 50, 220);
   SDL_RenderFillRect(wRenderer, &drawRect);
+
+  int cardCount = (int)cardTextures.size();
+  int cardWidth = drawRect.w / cardCount;
+  int cardHeight = drawRect.h;
+  string names[]{"0.8x cooldown", "+2 health", "New magic"};
+  for (int i = 0; i < cardCount; i++) {
+    int x = 8 + i * cardWidth;
+    int y = 8;
+
+    // Highlight border if selected
+    SDL_Rect cardRect = {x, y, cardWidth, cardHeight};
+    if (i == selectedCard)
+      SDL_SetRenderDrawColor(wRenderer, 255, 255, 0, 255); // yellow border
+    else
+      SDL_SetRenderDrawColor(wRenderer, 200, 200, 200, 255);
+    SDL_RenderDrawRect(wRenderer, &cardRect);
+
+    // Keep image square
+    int imgSize = std::min(cardWidth - 20, cardHeight - 40);
+    SDL_Rect imgRect = {x + (cardWidth - imgSize) / 2, y + 10, imgSize,
+                        imgSize};
+    SDL_RenderCopy(wRenderer, cardTextures[i], NULL, &imgRect);
+
+    // Draw text
+    SDL_Color white = {255, 255, 255, 255};
+    SDL_Surface *txtSurf =
+        TTF_RenderText_Solid(uiFont, names[i].c_str(), white);
+    SDL_Texture *txtTex = SDL_CreateTextureFromSurface(wRenderer, txtSurf);
+    SDL_Rect txtRect = {x + (cardWidth - txtSurf->w) / 2, y + imgSize + 15,
+                        txtSurf->w, txtSurf->h};
+    SDL_RenderCopy(wRenderer, txtTex, NULL, &txtRect);
+
+    SDL_FreeSurface(txtSurf);
+    SDL_DestroyTexture(txtTex);
+  }
+}
+void Player::handleMenuEvent(const SDL_Event &e) {
+  if (!draw)
+    return; // menu not active
+
+  if (e.type == SDL_KEYDOWN) {
+    switch (e.key.keysym.sym) {
+    case SDLK_SPACE: // cycle through cards
+      selectedCard = (selectedCard + 1) % (int)cardTextures.size();
+      break;
+
+    case SDLK_RETURN:
+      applyCardEffect(selectedCard);
+      draw = false;
+      break;
+    }
+  }
+}
+
+void Player::applyCardEffect(int cardIndex) {
+  switch (cardIndex) {
+  case 0:
+    cooldown *= 0.8; // reduce cooldown
+    break;
+  case 1:
+    wLives += 2; // add health
+    break;
+  case 2:
+    break;
+  }
 }
