@@ -1,10 +1,10 @@
 
-#include "projectile.hpp"
 #include "collisions.hpp"
 #include "globals.hpp"
 #include "lightSystem.hpp"
 #include "mapglobal.hpp"
 #include "particleSystem.hpp"
+#include "projectile.hpp"
 #include <climits>
 #include <cmath>
 #include <iostream>
@@ -39,8 +39,10 @@ projectile::projectile(int startX, int startY, int targetX, int targetY) {
   }
 
   // initial rect
-  proRect = {startX - camera.rect.x, startY - camera.rect.y, 10, 1};
-
+  proRect = {(int)std::round(((float)startX - camera.GetFloatPosition().x)),
+             (int)std::round(((float)startY - camera.GetFloatPosition().y)),
+             (int)(10.0f), // Scale dimensions
+             (int)(1.0f)};
   // start cooldown timer:world
   timer.start();
   timer.setTicks(cooldown * 1000);
@@ -49,8 +51,8 @@ projectile::projectile(int startX, int startY, int targetX, int targetY) {
 void projectile::update(float dt) {
   physics.move();
 
-  proRect.x = (int)(physics.kxPos - camera.rect.x);
-  proRect.y = (int)(physics.kyPos - camera.rect.y);
+  proRect.x = (int)(physics.kxPos - camera.GetFloatPosition().x);
+  proRect.y = (int)(physics.kyPos - camera.GetFloatPosition().y);
   ParticleSystem::active->setSpeedRange(0.2f, 1.5f);
   ParticleSystem::active->setLifeRange(0.5f, 1.0f);
   ParticleSystem::active->setSizeRange(0.1f, 0.8f);
@@ -58,7 +60,8 @@ void projectile::update(float dt) {
   ParticleSystem::active->setColorVariance(50);
   particleAccumulator += dt;
   if (particleAccumulator >= 0.1f) {
-    ParticleSystem::active->emit(proRect.x + camera.x, proRect.y + camera.y, 4);
+    ParticleSystem::active->emit(proRect.x + camera.GetFloatPosition().x,
+                                 proRect.y + camera.GetFloatPosition().y, 4);
     particleAccumulator = 0.0f;
   }
   if (angle < 0)

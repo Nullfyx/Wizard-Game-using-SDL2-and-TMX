@@ -12,9 +12,13 @@ struct Particle {
   float size;
   Light l;
   Uint8 r, g, b, a;
-  SDL_Rect parRect = {(int)x - camera.x, (int)y - camera.y, (int)size,
-                      (int)size};
-};
+  SDL_Rect parRect = {
+    // ((World Position - Camera Position) * Zoom Factor) -> Round -> Cast to Int
+    (int)std::round( ( (float)x - camera.GetFloatPosition().x ) * ZOOM_FACTOR ), 
+    (int)std::round( ( (float)y - camera.GetFloatPosition().y ) * ZOOM_FACTOR ), 
+    (int)((float)size * ZOOM_FACTOR), // Dimensions need scaling too!
+    (int)((float)size * ZOOM_FACTOR)
+};};
 
 class ParticleSystem {
 public:

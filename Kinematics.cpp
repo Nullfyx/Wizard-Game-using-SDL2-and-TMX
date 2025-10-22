@@ -1,4 +1,3 @@
-
 #include "Kinematics.hpp"
 
 Kinematics::Kinematics() {
@@ -22,6 +21,7 @@ Kinematics::Kinematics() {
   kmaxVel = 3;
   kminVelX = 0;
   timeOut = 0.0;
+  isGravityOn = true;
 }
 
 void Kinematics::applyForce(double fX, double fY) {

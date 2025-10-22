@@ -1,5 +1,5 @@
-#include "particleSystem.hpp"
 #include "lightSystem.hpp"
+#include "particleSystem.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
@@ -101,8 +101,8 @@ void ParticleSystem::update(float dt) {
     }
 
     if (LightSystem::active) {
-      p.parRect.x = static_cast<int>(roundf(p.x - camera.x));
-      p.parRect.y = static_cast<int>(roundf(p.y - camera.y));
+      p.parRect.x = static_cast<int>(roundf(p.x - camera.GetFloatPosition().x));
+      p.parRect.y = static_cast<int>(roundf(p.y - camera.GetFloatPosition().y));
 
       p.l.x = p.parRect.x;
       p.l.y = p.parRect.y;

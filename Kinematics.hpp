@@ -24,6 +24,7 @@ public:
   bool passThisFrameNegX;
   bool passThisFrameYPos;
   bool passThisFrameYNeg;
+  bool isGravityOn;
   void applyForce(double fX, double fY);
   double kmaxVel;
   double timeOut;
@@ -31,3 +32,5 @@ public:
 };
 
 #endif
+
+

@@ -11,7 +11,7 @@ Player::Player() {
   wWidth = 20;
   wHeight = 20;
   wWeight = 2000; // N
-  wMaxVel = 1;
+  wMaxVel = 2;
   wAtk = 10;  // weak at the begininning!
   wLives = 9; // maybe its a cat!
   wXPos = 0;
@@ -178,7 +178,14 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump, bool attack,
   if (jump && onGround && jumpTimer < 0.1f && !overlapping) {
     applyForce(0, -4900); // instant upward push
   } else if (overlapping) {
-    applyForce(0, -5);
+    if (wallRight)
+      applyForce(-5, 0);
+    if (wallLeft)
+      applyForce(5, 0);
+    if (onCeiling)
+      applyForce(0, 5);
+    if (onGround)
+      applyForce(0, -5);
   }
   if (attack) {
     // Pick nearest enemy at spawn
@@ -260,8 +267,8 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump, bool attack,
   wYPos = playerRect.y;
 
   // ===== RENDER =====
-  SDL_Rect screenRect = {static_cast<int>(playerRect.x - camera.rect.x),
-                         static_cast<int>(playerRect.y - camera.rect.y),
+  SDL_Rect screenRect = {static_cast<int>(playerRect.x - camera.GetFloatPosition().x),
+                         static_cast<int>(playerRect.y - camera.GetFloatPosition().y),
                          playerRect.w, playerRect.h};
 
   playerTexture.animateSprite(wRenderer, playerTexture.getCols(),

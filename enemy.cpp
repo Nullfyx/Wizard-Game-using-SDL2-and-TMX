@@ -1,40 +1,43 @@
 #include "enemy.hpp"
-#include "globals.hpp"
-#include <SDL2/SDL_render.h>
+#include "enemyPathing.hpp"
 #include <algorithm>
 #include <cmath>
-#include <cstdlib>
-#include <iostream>
-#include <limits>
-#include <queue>
-#include <tuple>
-#include <unordered_map>
+#include <cstdio>
+#include <cstdlib> // For rand()
 #include <vector>
 
-// ===================== TILE ANIMATIONS =====================
+// Global patrol points for enemy patrol behavior
+const int PATROL_RANGE = 5; // tiles
+const std::vector<std::pair<int, int>> patrolPoints = {
+    {0, 0}, {PATROL_RANGE, 0}, {PATROL_RANGE, PATROL_RANGE}, {0, PATROL_RANGE}};
+
+// Animate a tile based on delta time
 void update_tile_anim(tmx_tile *tile, anim_state *state,
                       unsigned int delta_ms) {
   if (!tile || tile->animation_len == 0 || !state)
     return;
   state->time_acc += delta_ms;
-  unsigned int frame_duration = tile->animation[state->current_frame].duration;
-  if (state->time_acc >= frame_duration) {
-    state->time_acc -= frame_duration;
+  while (state->time_acc >= tile->animation[state->current_frame].duration) {
+    state->time_acc -= tile->animation[state->current_frame].duration;
     state->current_frame = (state->current_frame + 1) % tile->animation_len;
   }
 }
 
+// Animate all tiles in the map layer
 void update_all_tile_animations(tmx_map *map, unsigned int delta_ms) {
   if (!map || !map->ly_head)
     return;
   tmx_layer *layer = map->ly_head;
+
   if (layer->type != L_LAYER || !layer->visible)
     return;
+
   unsigned int total = map->width * map->height;
   for (unsigned int i = 0; i < total; ++i) {
     unsigned int gid = layer->content.gids[i] & TMX_FLIP_BITS_REMOVAL;
     if (gid == 0 || gid >= MAX_TILES)
       continue;
+
     tmx_tile *tile = tmx_get_tile(map, gid);
     if (tile && tile->animation_len > 0) {
       anim_state *state = &animStates[gid];
@@ -43,240 +46,282 @@ void update_all_tile_animations(tmx_map *map, unsigned int delta_ms) {
   }
 }
 
-// ===================== HELPER FUNCTIONS =====================
-struct Node {
-  int x, y;
-  float cost, heuristic;
-  bool operator>(const Node &other) const {
-    return (cost + heuristic) > (other.cost + other.heuristic);
-  }
-};
-
-bool isWalkable(tmx_map *map, int tx, int ty) {
-  SDL_Rect temp = {static_cast<int>(tx * map->tile_width),
-                   static_cast<int>(ty * map->tile_height),
-                   static_cast<int>(map->tile_width),
-                   static_cast<int>(map->tile_height)};
-  bool floor, left, right, ceil, overlap;
-  checkCollisionsXY(map, floor, left, right, ceil, overlap, temp);
-  return floor;
-}
-
-float heuristic(int x, int y, int goalX, int goalY) {
-  // Manhattan distance
-  return std::abs(goalX - x) + std::abs(goalY - y);
-}
-
-// ===================== A* PATHFINDING =====================
-std::vector<std::pair<int, int>> astarPath(tmx_map *map, int startX, int startY,
-                                           int goalX, int goalY) {
-  int w = map->width;
-  int h = map->height;
-
-  auto inBounds = [&](int tx, int ty) {
-    return tx >= 0 && tx < w && ty >= 0 && ty < h;
-  };
-  if (!inBounds(startX, startY) || !inBounds(goalX, goalY)) {
-    // SDL_Log("Pathfinding aborted: out of bounds");
-    return {};
-  }
-
-  std::vector<std::vector<float>> dist(
-      w, std::vector<float>(h, std::numeric_limits<float>::max()));
-  std::vector<std::vector<std::pair<int, int>>> prev(
-      w, std::vector<std::pair<int, int>>(h, {-1, -1}));
-  std::priority_queue<Node, std::vector<Node>, std::greater<Node>> pq;
-
-  dist[startX][startY] = 0;
-  pq.push({startX, startY, 0, heuristic(startX, startY, goalX, goalY)});
-  int dirs[7][8] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}}; // right, left, down, up
-
-  while (!pq.empty()) {
-    Node node = pq.top();
-    pq.pop();
-    if (node.x == goalX && node.y == goalY)
-      break;
-
-    for (auto &d : dirs) {
-      int nx = node.x + d[0];
-      int ny = node.y + d[9];
-      if (!inBounds(nx, ny))
-        continue;
-      if (!isWalkable(map, nx, ny))
-        continue; // collision check
-
-      float newCost = dist[node.x][node.y] + 1.0f;
-      if (newCost < dist[nx][ny]) {
-        dist[nx][ny] = newCost;
-        prev[nx][ny] = {node.x, node.y};
-        pq.push({nx, ny, newCost, heuristic(nx, ny, goalX, goalY)});
-      }
-    }
-  }
-
-  std::vector<std::pair<int, int>> path;
-  int cx = goalX, cy = goalY;
-  if (!inBounds(cx, cy) || prev[cx][cy].first == -1)
-    return {};
-
-  while (inBounds(cx, cy) && prev[cx][cy].first != -1) {
-    path.push_back({cx, cy});
-    auto p = prev[cx][cy];
-    cx = p.first;
-    cy = p.second;
-  }
-  std::reverse(path.begin(), path.end());
-  return path;
-}
-
-// ===================== ENEMY UPDATE =====================
+// Update position/velocity from physics
 void moving_tile::update() {
-  vx = physics.kvelocityX;
-  vy = physics.kvelocityY;
   x = physics.kxPos;
   y = physics.kyPos;
+  vx = physics.kvelocityX;
+  vy = physics.kvelocityY;
 }
 
+// Main enemy AI update
 void moving_tile::enemyUpdate(float deltaTime, tmx_map *map) {
-  unsigned int dt_ms = static_cast<unsigned int>(deltaTime * 1000.0f);
-  update_all_tile_animations(map, dt_ms);
-  update_tile_anim(tmx_get_tile(map, ts_firstgid + base_local_id), &anim,
-                   dt_ms);
-  move(dt_ms, map);
-}
+  physics.kdt = deltaTime;
 
-// ===================== ENEMY MOVEMENT =====================
-void moving_tile::move(unsigned int dt_ms, tmx_map *map) {
-  physics.passThisFrameYPos = false;
-  physics.passThisFrameYNeg = false;
-  physics.passThisFramePosX = false;
-  physics.passThisFrameNegX = false;
+  // CRITICAL FIX: Disable gravity using the flag
+  physics.isGravityOn = false;
 
-  float dt_sec = dt_ms / 1000.0f;
-  physics.kdt = dt_sec;
+  // Set the pushback flag (needed for the physics block below)
+  bool isPushBackOn = true;
 
-  rect.x = static_cast<int>(x);
-  rect.y = static_cast<int>(y);
+  float tile_w = static_cast<float>(map->tile_width);
+  float tile_h = static_cast<float>(map->tile_height);
+  float half_w = width / 2.0f;
+  float half_h = height / 2.0f;
 
-  bool onGround = false, wallLeft = false, wallRight = false, onCeiling = false,
-       overlapping = false;
-  checkCollisionsXY(map, onGround, wallLeft, wallRight, onCeiling, overlapping,
-                    rect);
+  // Calculate Enemy Center Position for AI
+  float enemyCenterX = physics.kxPos + half_w;
+  float enemyCenterY = physics.kyPos + half_h;
 
-  int startX = static_cast<int>(std::round(x / map->tile_width));
-  int startY = static_cast<int>(std::round(y / map->tile_height));
-  int goalX = static_cast<int>(std::round(playerX / map->tile_width));
-  int goalY = static_cast<int>(std::round(playerY / map->tile_height));
+  int tx = static_cast<int>(std::floor(enemyCenterX / tile_w));
+  int ty = static_cast<int>(std::floor(enemyCenterY / tile_h));
 
-  std::vector<std::pair<int, int>> path =
-      astarPath(map, startX, startY, goalX, goalY);
+  // NOTE: Assuming playerX/playerY are external globals defined elsewhere
+  int playerTx = static_cast<int>(std::floor(playerX / tile_w));
+  int playerTy = static_cast<int>(std::floor(playerY / tile_h));
 
-  bool moveLeft = false, moveRight = false, wantJump = false;
-  float threshold = map->tile_width / 2.0f;
+  // Determine distance to player (tile-based)
+  float distToPlayer = std::hypot(playerTx - tx, playerTy - ty);
 
-  if (!path.empty()) {
-    auto next = path.front();
-    float nextX = next.first * map->tile_width;
-    float nextY = next.second * map->tile_height;
-    if (nextX > x + threshold)
-      moveRight = true;
-    else if (nextX < x - threshold)
-      moveLeft = true;
-    if ((y - nextY) > map->tile_height * 0.5f)
-      wantJump = true;
-  } else {
-    if (patrolDir == 0)
-      patrolDir = 1;
-    if (patrolDir > 0)
-      moveRight = true;
-    else
-      moveLeft = true;
-    if (wallRight)
-      patrolDir = -1;
-    if (wallLeft)
-      patrolDir = 1;
-  }
+  // Transition state based on distance
+  state = (distToPlayer < 10) ? CHASE : PATROL;
 
-  // ===== CLIFF / LEDGE DETECTION =====
-  if (onGround) {
-    int aheadX = static_cast<int>(
-        (x + (moveRight ? map->tile_width : -map->tile_width)) /
-        map->tile_width);
-    int aheadY = static_cast<int>((y + map->tile_height) / map->tile_height);
-    bool groundAhead = isWalkable(map, aheadX, aheadY);
-    bool playerBelow = (playerY > y);
-    if (!groundAhead && !playerBelow) {
-      if (moveRight) {
-        moveRight = false;
-        moveLeft = true;
-        patrolDir = -1;
-      } else if (moveLeft) {
-        moveLeft = false;
-        moveRight = true;
-        patrolDir = 1;
+  // Cooldown path update timer
+  pathUpdateTimer -= deltaTime;
+
+  // --- Start Movement Calculation ---
+
+  // Set max velocity
+  physics.kmaxVel = 1.5f;
+
+  // Save current position for collision rollback if needed
+  prevX = x;
+  prevY = y;
+
+  const float MAX_STEERING_FORCE = 400.0f;
+  float desiredForceX = 0.0f;
+  float desiredForceY = 0.0f;
+
+  // --- CONSOLIDATED AI TARGET AND PATHFINDING LOGIC ---
+  int goalX, goalY;
+  float updateFrequency;
+
+  if (state == CHASE) {
+    goalX = playerTx;
+    goalY = playerTy;
+    updateFrequency = 0.3f;
+  } else { // PATROL
+    goalX = patrolPoints[patrolStep].first;
+    goalY = patrolPoints[patrolStep].second;
+    updateFrequency = 1.0f;
+
+    // *** PATROL LOGIC: GENERATE A NEW CHAOTIC PATH SEGMENT ***
+    if (currentPath.empty()) {
+      // Generate a random 2-tile path segment
+
+      // Random offsets for a 2-step chaotic walk (max 2 tiles away)
+      int rx1 = (rand() % 3) - 1; // -1, 0, or 1
+      int ry1 = (rand() % 3) - 1;
+      int rx2 = (rand() % 3) - 1;
+      int ry2 = (rand() % 3) - 1;
+
+      int firstStepX = tx + rx1;
+      int firstStepY = ty + ry1;
+      int secondStepX = firstStepX + rx2;
+      int secondStepY = firstStepY + ry2;
+
+      // Populate path (using current tile as fallback if destination is
+      // invalid)
+      currentPath.emplace_back(secondStepX, secondStepY);
+      currentPath.emplace_back(firstStepX, firstStepY);
+
+      std::reverse(currentPath.begin(),
+                   currentPath.end()); // Path from current position to end node
+
+      // Ensure the path always has at least the starting tile center as the
+      // target if all else fails
+      if (currentPath.empty()) {
+        currentPath.emplace_back(tx, ty);
       }
     }
   }
 
-  if (moveLeft)
-    physics.applyForce(-200, 0);
-  if (moveRight)
-    physics.applyForce(200, 0);
-  if (!onGround)
-    physics.applyForce(0, 9800);
-  else {
-    physics.kvelocityY = 0;
-    y = std::floor(y / map->tile_height) * map->tile_height;
+  if (state == CHASE && (pathUpdateTimer <= 0 || currentPath.empty())) {
+    currentPath = astarPath(map, tx, ty, goalX, goalY, 1, 1);
+    pathUpdateTimer = updateFrequency;
   }
-  if (wantJump && onGround) {
-    physics.applyForce(0, -50000);
-    jumpFrames = 10;
+
+  // --- CONSOLIDATED STEERING LOGIC (used by both CHASE and PATROL) ---
+  if (!currentPath.empty()) {
+    auto next = currentPath.front();
+    // Target the center of the next tile
+    float nextX = next.first * tile_w + tile_w / 2.0f;
+    float nextY = next.second * tile_h + tile_h / 2.0f;
+
+    // Calculate delta from enemy CENTER to target CENTER
+    float deltaX = nextX - enemyCenterX;
+    float deltaY = nextY - enemyCenterY;
+    float dist = std::hypot(deltaX, deltaY);
+
+    const float ARRIVAL_TOLERANCE = tile_w * 0.3f;
+
+    // Path Advancement logic
+    if (dist < ARRIVAL_TOLERANCE) {
+      currentPath.erase(currentPath.begin());
+
+      // If path is now empty:
+      if (currentPath.empty()) {
+        if (state == PATROL) {
+          // Patroller reached its destination, advance patrol step
+          patrolStep = (patrolStep + 1) % patrolPoints.size();
+        }
+        goto EndMovementCalculation; // Stop movement this frame
+      }
+
+      // Recalculate movement direction for the new node immediately
+      next = currentPath.front();
+      nextX = next.first * tile_w + tile_w / 2.0f;
+      nextY = next.second * tile_h + tile_h / 2.0f;
+      deltaX = nextX - enemyCenterX;
+      deltaY = nextY - enemyCenterY;
+      dist = std::hypot(deltaX, deltaY);
+    }
+
+    // Proportional Steering/Slowdown Force
+    const float SLOWDOWN_RADIUS = tile_w * 3.0f;
+
+    float forceMagnitude = MAX_STEERING_FORCE;
+
+    if (dist < SLOWDOWN_RADIUS) {
+      forceMagnitude = MAX_STEERING_FORCE * (dist / SLOWDOWN_RADIUS);
+    }
+
+    // Apply normalized steering force
+    if (dist > 0.001f) {
+      float normX = deltaX / dist;
+      float normY = deltaY / dist;
+
+      // Patrol uses a fixed, slower force with a random kick
+      if (state == PATROL) {
+        forceMagnitude = MAX_STEERING_FORCE * 0.3f;
+
+        // RANDOM FORCE HACK FOR CHAOTIC MOVEMENT
+        float randomWalkForce = 50.0f; // Magnitude of the random kick
+        float randX = ((float)rand() / RAND_MAX) * 2.0f - 1.0f;
+        float randY = ((float)rand() / RAND_MAX) * 2.0f - 1.0f;
+
+        desiredForceX = normX * forceMagnitude + randX * randomWalkForce;
+        desiredForceY = normY * forceMagnitude + randY * randomWalkForce;
+      } else {
+        // CHASE uses the calculated proportional force
+        desiredForceX = normX * forceMagnitude;
+        desiredForceY = normY * forceMagnitude;
+      }
+    }
   }
-  if (wallLeft)
-    stopLeftMovement();
-  if (wallRight)
-    stopRightMovement();
-  if (overlapping) {
-    if (wallLeft && physics.kvelocityX < 0)
-      physics.kvelocityX = 0;
-    if (wallRight && physics.kvelocityX > 0)
-      physics.kvelocityX = 0;
-  }
-  if (std::abs(physics.kvelocityX) < 0.05f)
-    physics.kvelocityX = 0;
-  if (std::abs(physics.kvelocityY) < 0.05f)
-    physics.kvelocityY = 0;
-  physics.kmaxVel = 0.5f;
+
+  // Apply the calculated forces
+  physics.applyForce(desiredForceX, desiredForceY);
+
+EndMovementCalculation:;
+
+  // Move using physics
   physics.move();
   update();
+
+  // Collision detection and fix for block penetration
+  bool floor, left, right, ceil, overlap;
+  SDL_Rect tempRect = {static_cast<int>(x), static_cast<int>(y), width, height};
+  checkCollisionsXY(map, floor, left, right, ceil, overlap, tempRect);
+
+  printf("ENEMY DEBUG: pos=(%.2f,%.2f) kpos=(%.2f,%.2f) kv=(%.2f,%.2f) "
+         "state=%d pathsz=%zu overlap=%d\n",
+         x, y, physics.kxPos, physics.kyPos, physics.kvelocityX,
+         physics.kvelocityY, static_cast<int>(state), currentPath.size(),
+         overlap);
+
+  // --- DYNAMIC ESCAPE FORCE LOGIC ---
+  if (overlap) {
+    // 1. Increment counter on collision
+    overlap_counter++;
+
+    // 2. Rollback position to last known safe position
+    x = prevX;
+    y = prevY;
+    physics.kxPos = prevX;
+    physics.kyPos = prevY;
+
+    // 3. Selective Velocity/Force Killing
+
+    // Horizontal Collision: Kill X velocity/force
+    if (left || right) {
+      physics.kforceX = 0.0f;
+      physics.kvelocityX = 0.0f;
+    }
+
+    // Vertical Collision: Kill Y velocity/force
+    if (floor || ceil) {
+      physics.kforceY = 0.0f;
+      physics.kvelocityY = 0.0f;
+    }
+
+    // 4. Conditional DYNAMIC Pushback (The Flagged Escape Mechanism)
+    if (isPushBackOn && overlap_counter >= 3) {
+      // RAMPING ESCAPE FORCE: Base 150.0f + 100.0f per frame past 3 (capped
+      // arbitrarily high)
+      const float BASE_FORCE = 150.0f;
+      const float RAMP_RATE = 100.0f;
+      float dynamicEscapeForce = BASE_FORCE + (overlap_counter - 2) * RAMP_RATE;
+
+      // Push enemy away from the blocking wall
+      if (left) {
+        physics.applyForce(dynamicEscapeForce, 0.0f);
+
+        // STUCK PATROL ADVANCEMENT HACK
+        if (state == PATROL) {
+          currentPath.clear();
+          patrolStep = (patrolStep + 1) % patrolPoints.size();
+        }
+      } else if (right) {
+        physics.applyForce(-dynamicEscapeForce, 0.0f);
+
+        // STUCK PATROL ADVANCEMENT HACK
+        if (state == PATROL) {
+          currentPath.clear();
+          patrolStep = (patrolStep + 1) % patrolPoints.size();
+        }
+      }
+
+      // Push enemy away from the floor/ceiling
+      if (ceil) {
+        physics.applyForce(0.0f, dynamicEscapeForce);
+      } else if (floor) {
+        physics.applyForce(0.0f, -dynamicEscapeForce);
+      }
+    }
+
+    // 5. Force path recalculation if chasing (only on horizontal block)
+    if (state == CHASE && (left || right)) {
+      currentPath.clear();
+      pathUpdateTimer = 0.0f;
+    }
+  } else {
+    // Reset counter if there was no overlap
+    overlap_counter = 0;
+  }
+
+  // Update enemy rect for rendering position
   rect.x = static_cast<int>(x);
   rect.y = static_cast<int>(y);
+
+  // Animation update for tiles
+  unsigned int dt_ms = static_cast<unsigned int>(deltaTime * 1000.0f);
+  update_all_tile_animations(map, dt_ms);
+  tmx_tile *current_tile = tmx_get_tile(map, ts_firstgid + base_local_id);
+  update_tile_anim(current_tile, &anim, dt_ms);
 }
 
-// ===================== HELPERS =====================
-inline void moving_tile::stopRightMovement() {
-  if (physics.kvelocityX > 0 || vy > 0) {
-    physics.kvelocityX = 0;
-    physics.kaccelerationX = 0;
-    physics.kforceX = 0;
-    vy = 0;
-    physics.passThisFramePosX = true;
-  }
-}
-
-inline void moving_tile::stopLeftMovement() {
-  if (physics.kvelocityX < 0 || vx < 0) {
-    physics.kvelocityX = 0;
-    physics.kaccelerationX = 0;
-    physics.kforceX = 0;
-    vx = 0;
-    physics.passThisFrameNegX = true;
-  }
-}
-
-inline void moving_tile::stopUpwardMovement() {
-  if (physics.kvelocityY < 0) {
-    physics.kvelocityY = 0;
-    physics.passThisFrameYNeg = true;
-  }
-}
+// Stub movement blockers (can be implemented later)
+inline void moving_tile::stopRightMovement() {}
+inline void moving_tile::stopLeftMovement() {}
+inline void moving_tile::stopUpwardMovement() {}

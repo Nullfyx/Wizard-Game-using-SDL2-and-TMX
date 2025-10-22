@@ -147,25 +147,45 @@ bool renderLoop(const char *path) {
     camera.Update(playerPos, 30.0f, 5.0f, 5.0f, deltaTime);
 
     // Clamp camera inside map bounds
-    if (camera.rect.x < 0)
-      camera.rect.x = 0;
-    if (camera.rect.y < 0)
-      camera.rect.y = 0;
-    if (camera.rect.x > map_width_px - camera.rect.w)
-      camera.rect.x = map_width_px - camera.rect.w;
-    if (camera.rect.y > map_height_px - camera.rect.h)
-      camera.rect.y = map_height_px - camera.rect.h;
+
+    Vec2 currentPos = camera.GetFloatPosition();
+
+    // Update dimensions (assuming needed here)
     camera.rect.w = scaledScreenWidth;
     camera.rect.h = scaledScreenHeight;
 
+    // Clamp Left/Right
+    if (currentPos.x < 0.0f) {
+      currentPos.x = 0.0f;
+    } else if (currentPos.x > map_width_px - camera.rect.w) {
+      currentPos.x = map_width_px - camera.rect.w;
+    }
+
+    // Clamp Top/Bottom
+    if (currentPos.y < 0.0f) {
+      currentPos.y = 0.0f;
+    } else if (currentPos.y > map_height_px - camera.rect.h) {
+      currentPos.y = map_height_px - camera.rect.h;
+    }
+
+    // Apply clamped position
+    camera.SetFloatPosition(currentPos);
     // Updates
 
     // Update enemies and check collisions
 
     for (auto &enemy : enemies) {
       enemy.enemyUpdate(deltaTime, map);
-      SDL_Rect dst{enemy.rect.x - camera.rect.x, enemy.rect.y - camera.rect.y,
-                   enemy.rect.w, enemy.rect.h};
+      float dx = (float)enemy.rect.x - camera.GetFloatPosition().x;
+      float dy = (float)enemy.rect.y - camera.GetFloatPosition().y;
+
+      SDL_Rect dst{
+          // Position: (World Difference * Zoom) -> Round -> Cast to Int
+          (int)std::round(dx), (int)std::round(dy),
+
+          // Dimensions: (World Size * Zoom) -> Round -> Cast to Int
+          (int)std::round((float)enemy.rect.w),
+          (int)std::round((float)enemy.rect.h)};
       enemy.texture.animateSprite(wRenderer, enemy.texture.getCols(),
                                   enemy.texture.getCells(), &dst,
                                   enemy.texture.angle);
@@ -247,8 +267,8 @@ bool renderLoop(const char *path) {
     float parallaxFactorY = 0.3f;
 
     // Offset background movement with camera
-    int offsetX = (int)(camera.rect.x * parallaxFactorX);
-    int offsetY = (int)(camera.rect.y * parallaxFactorY);
+    int offsetX = (int)(camera.GetFloatPosition().x * parallaxFactorX);
+    int offsetY = (int)(camera.GetFloatPosition().y * parallaxFactorY);
 
     // Make the texture appear "smaller" by scaling down draw size
     // Example: draw at half size -> background looks zoomed OUT
@@ -295,7 +315,9 @@ bool renderLoop(const char *path) {
       while (SDL_GetTicks() - start < 500) { // 500ms pause
         float dt = 0.016f;                   // roughly 60 FPS
         ParticleSystem::active->update(dt);
-        ParticleSystem::active->render(wRenderer, 3.0f, camera.x, camera.y);
+        ParticleSystem::active->render(wRenderer, 3.0f,
+                                       camera.GetFloatPosition().x,
+                                       camera.GetFloatPosition().y);
         SDL_RenderPresent(wRenderer);
         SDL_Delay(16); // cap ~60 FPS
       }
@@ -312,8 +334,38 @@ bool renderLoop(const char *path) {
       }
     }
     for (auto e : enemies) {
-      SDL_Rect dst{e.rect.x - camera.rect.x, e.rect.y - camera.rect.y, e.rect.w,
-                   e.rect.h};
+
+      // 1. Calculate the smooth world difference (float)
+      float dx = (float)e.rect.x - camera.GetFloatPosition().x;
+      float dy = (float)e.rect.y - camera.GetFloatPosition().y;
+
+      // 2. Create the SDL_Rect, applying ROUNDING to the world difference
+      //    but NOT applying the zoom factor. We use the original e.rect.w/h.
+      SDL_Rect dst = {// Position: (World Difference) -> Round -> Cast to Int
+                      (int)std::round(dx), (int)std::round(dy),
+
+                      // Dimensions: Use original, unscaled world units
+                      e.rect.w, e.rect.h};
+
+      // 3. Let the animateSprite function apply the scaling as it did before.
+      e.texture.animateSprite(wRenderer, e.texture.getCols(),
+                              e.texture.getCells(), &dst, e.texture.angle);
+    }
+    for (auto e : enemies) {
+
+      // 1. Calculate the smooth world difference (float)
+      float dx = (float)e.rect.x - camera.GetFloatPosition().x;
+      float dy = (float)e.rect.y - camera.GetFloatPosition().y;
+
+      // 2. Create the SDL_Rect, applying ROUNDING to the world difference
+      //    but NOT applying the zoom factor. We use the original e.rect.w/h.
+      SDL_Rect dst = {// Position: (World Difference) -> Round -> Cast to Int
+                      (int)std::round(dx), (int)std::round(dy),
+
+                      // Dimensions: Use original, unscaled world units
+                      e.rect.w, e.rect.h};
+
+      // 3. Let the animateSprite function apply the scaling as it did before.
       e.texture.animateSprite(wRenderer, e.texture.getCols(),
                               e.texture.getCells(), &dst, e.texture.angle);
     }
@@ -322,7 +374,8 @@ bool renderLoop(const char *path) {
     ParticleSystem::active->update(deltaTime);
     LightSystem::active->update(deltaTime);
 
-    ParticleSystem::active->render(wRenderer, 3.0, camera.x, camera.y);
+    ParticleSystem::active->render(wRenderer, 3.0, camera.GetFloatPosition().x,
+                                   camera.GetFloatPosition().y);
     if (LightSystem::active) {
       LightSystem::active->render(wRenderer);
     }

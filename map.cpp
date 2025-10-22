@@ -10,7 +10,6 @@
 #include <string>
 #include <tmx.h>
 #include <unordered_set>
-anim_state animStates[MAX_TILES] = {};
 
 void set_color(int color) {
   tmx_col_bytes col = tmx_col_to_bytes(color);
@@ -76,8 +75,10 @@ void draw_layer(tmx_map *map, tmx_layer *layer, float dt) {
       // animation code
       if (illuminance > 0) {
         Light l;
-        l.x = (j * ts->tile_width + ts->tile_width / 2) - camera.rect.x;
-        l.y = (i * ts->tile_height + ts->tile_height / 2) - camera.rect.y;
+        l.x = (j * ts->tile_width + ts->tile_width / 2) -
+              camera.GetFloatPosition().x;
+        l.y = (i * ts->tile_height + ts->tile_height / 2) -
+              camera.GetFloatPosition().y;
         l.intensity = illuminance;
         l.life = 10000000; // large life
 
@@ -221,8 +222,8 @@ void draw_tile(void *image, unsigned int sx, unsigned int sy, unsigned int sw,
   src_rect.y = sy;
   src_rect.w = sw;
   src_rect.h = sh;
-  dest_rect.x = (int)(dx - camera.rect.x);
-  dest_rect.y = (int)(dy - camera.rect.y);
+  dest_rect.x = (int)(dx - camera.GetFloatPosition().x);
+  dest_rect.y = (int)(dy - camera.GetFloatPosition().y);
   dest_rect.w = sw;
   dest_rect.h = sh;
   // Note: flags ignored; add flipping if needed
@@ -253,8 +254,8 @@ void draw_objects(tmx_object_group *objgr) {
   while (head) {
     if (head->visible) {
       if (head->obj_type == OT_SQUARE) {
-        rect.x = (int)((head->x - camera.rect.x) * 4.0);
-        rect.y = (int)((head->y - camera.rect.y) * 4.0);
+        rect.x = (int)((head->x - camera.GetFloatPosition().x) * 4.0);
+        rect.y = (int)((head->y - camera.GetFloatPosition().y) * 4.0);
         rect.w = (int)(head->width * 4.0);
         rect.h = (int)(head->height * 4.0);
         SDL_RenderDrawRect(wRenderer, &rect);

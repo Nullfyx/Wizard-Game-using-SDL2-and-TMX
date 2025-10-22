@@ -92,32 +92,36 @@ void checkCollisionsXY(tmx_map *map, bool &floorCollision,
                           playerRect.w, 1};
     floorCollision = rectHitsSolidTile(map, checkRect, false);
   }
-  // --- Overlap check: restore original "early exit" thoroughness ---
+  // --- Overlap check: check all tiles occupied by the rect ---
   {
     int leftTileX = playerRect.x / tileW;
     int rightTileX = (playerRect.x + playerRect.w - 1) / tileW;
     int topTileY = playerRect.y / tileH;
     int bottomTileY = (playerRect.y + playerRect.h - 1) / tileH;
+
     for (int tx = leftTileX; tx <= rightTileX; ++tx) {
       for (int ty = topTileY; ty <= bottomTileY; ++ty) {
         tmx_layer *layer = map->ly_head;
+
         while (layer) {
           if (!layer->visible || layer->type != L_LAYER) {
             layer = layer->next;
             continue;
           }
+
           tmx_tile *tile = getTile(map, layer, tx, ty);
           if (!tile) {
             layer = layer->next;
             continue;
           }
+
           for (tmx_object *obj = tile->collision; obj; obj = obj->next) {
             SDL_Rect objRect = {tx * tileW + (int)obj->x,
                                 ty * tileH + (int)obj->y, (int)obj->width,
                                 (int)obj->height};
             if (SDL_HasIntersection(&playerRect, &objRect)) {
               overlapping = true;
-              return; // immediate exit (like OG logic!)
+              return; // Exit immediately upon first overlap found
             }
           }
           layer = layer->next;

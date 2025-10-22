@@ -19,4 +19,5 @@ extern bool shouldRestart;
 extern float *mana;
 extern int *level;
 extern TTF_Font *font;
+#define ZOOM_FACTOR 4.0f
 #endif
