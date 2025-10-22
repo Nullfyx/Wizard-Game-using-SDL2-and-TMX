@@ -75,8 +75,8 @@ void projectile::update(float dt) {
     l.radius = 34;
     l.intensity = 0.2f;
     l.r = 255;
-    l.g = 255;
-    l.b = 255;
+    l.g = 154;
+    l.b = 9;
 
     LightSystem::active->addLight(l);
   }

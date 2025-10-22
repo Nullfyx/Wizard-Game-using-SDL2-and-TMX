@@ -9,6 +9,7 @@
 #include "projectile.hpp"
 #include "render_loop.hpp"
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_ttf.h>
 #include <vector>
@@ -33,6 +34,7 @@ bool renderLoop(const char *path) {
   bool moveRight = false;
   bool jump = false;
   bool attack = false;
+  bool isDown = false;
   // Player setup
   Player player;
   player.setMap(map);
@@ -106,6 +108,9 @@ bool renderLoop(const char *path) {
         case SDLK_1:
           incDt = true;
           break;
+        case SDLK_DOWN:
+          isDown = true;
+          break;
         }
       }
       if (e.type == SDL_KEYUP && e.key.repeat == 0) {
@@ -118,6 +123,10 @@ bool renderLoop(const char *path) {
           break;
         case SDLK_1:
           incDt = false;
+          break;
+        case SDLK_DOWN:
+          isDown = false;
+          break;
         default:
           player.playerTexture.WIMG_Load(src);
           break;
@@ -295,7 +304,7 @@ bool renderLoop(const char *path) {
     // Render map and actors
     render_map(map, deltaTime);
     if (!isDead)
-      player.moveRender(moveRight, moveLeft, jump, attack, projectiles);
+      player.moveRender(moveRight, moveLeft, jump, attack, projectiles, isDown);
     isDead = false;
     if (player.lives() <= 0 || player.yPos() > map_height_px) {
       float centerX = player.kxPos + player.width() / 2.0f;
@@ -308,6 +317,7 @@ bool renderLoop(const char *path) {
         ParticleSystem::active->setBaseColor(255, 255, 255, 255);
         ParticleSystem::active->setColorVariance(50);
         ParticleSystem::active->emit(centerX, centerY, 100);
+        ParticleSystem::active->setGravity(true);
       }
 
       // Animate particles for ~0.5 seconds

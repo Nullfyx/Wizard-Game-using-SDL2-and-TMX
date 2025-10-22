@@ -129,8 +129,8 @@ void ParticleSystem::render(SDL_Renderer *renderer, float zoom, float camX,
                             float camY) {
   for (auto &p : particles) {
     SDL_Rect dst{(int)((p.x - camX - p.size / 2)),
-                 (int)((p.y - camY - p.size / 2)), (int)(p.size),
-                 (int)(p.size)};
+                 (int)(((p.y + (isGravity ? 97 : 0)) - camY - p.size / 2)),
+                 (int)(p.size), (int)(p.size)};
     SDL_SetTextureColorMod(tex, p.r, p.g, p.b);
     SDL_SetTextureAlphaMod(tex, p.a);
     SDL_RenderCopy(renderer, tex, nullptr, &dst);

@@ -52,12 +52,13 @@ public:
     baseA = A;
   }
   void setColorVariance(int variance) { colorVariance = variance; }
+  void setGravity(bool g){isGravity = g;}
 
 private:
   std::vector<Particle> particles;
   SDL_Texture *tex;
   float scale; // zoom scale
-
+  bool isGravity = false;
   //  Config
   float minSpeed = 0.5f, maxSpeed = 2.0f;
   float minLife = 0.5f, maxLife = 1.5f;

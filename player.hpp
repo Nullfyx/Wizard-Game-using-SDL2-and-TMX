@@ -162,7 +162,7 @@ TTF_Font* uiFont = nullptr;
 
   // move the player
   void moveRender(bool moveRight, bool moveLeft, bool jump, bool attack,
-                  vector<projectile *> &projectiles);
+                  vector<projectile *> &projectiles, bool isDown = false);
 
   // update the time;
   void update(float d);

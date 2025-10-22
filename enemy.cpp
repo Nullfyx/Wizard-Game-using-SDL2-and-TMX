@@ -234,11 +234,11 @@ EndMovementCalculation:;
   SDL_Rect tempRect = {static_cast<int>(x), static_cast<int>(y), width, height};
   checkCollisionsXY(map, floor, left, right, ceil, overlap, tempRect);
 
-  printf("ENEMY DEBUG: pos=(%.2f,%.2f) kpos=(%.2f,%.2f) kv=(%.2f,%.2f) "
-         "state=%d pathsz=%zu overlap=%d\n",
-         x, y, physics.kxPos, physics.kyPos, physics.kvelocityX,
-         physics.kvelocityY, static_cast<int>(state), currentPath.size(),
-         overlap);
+  // printf("ENEMY DEBUG: pos=(%.2f,%.2f) kpos=(%.2f,%.2f) kv=(%.2f,%.2f) "
+  //        "state=%d pathsz=%zu overlap=%d\n",
+  //        x, y, physics.kxPos, physics.kyPos, physics.kvelocityX,
+  //        physics.kvelocityY, static_cast<int>(state), currentPath.size(),
+  //        overlap);
 
   // --- DYNAMIC ESCAPE FORCE LOGIC ---
   if (overlap) {

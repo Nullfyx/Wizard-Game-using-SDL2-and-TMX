@@ -1,5 +1,4 @@
 #include "globals.hpp"
-#include "particleSystem.hpp"
 #include "player.hpp"
 #include "projectile.hpp"
 #include <SDL2/SDL_image.h>
@@ -134,7 +133,7 @@ void Player::print(bool onGround, bool onCeiling, bool wallLeft, bool wallRight,
   cout << overlapping << ": overlapping" << endl;
 }
 void Player::moveRender(bool moveRight, bool moveLeft, bool jump, bool attack,
-                        vector<projectile *> &projectiles) {
+                        vector<projectile *> &projectiles, bool isDown) {
 
   // ===== RESET FRAME FLAGS =====
   passThisFrameYPos = false;
@@ -144,7 +143,7 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump, bool attack,
 
   jumping = jump;
   kdt = dt;
-
+  cout << "isDown: " << isDown << endl;
   // Sync world positions to kinematics
   kxPos = static_cast<double>(wXPos);
   kyPos = static_cast<double>(wYPos);
@@ -155,7 +154,7 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump, bool attack,
   bool onGround = false, wallLeft = false, wallRight = false, onCeiling = false,
        overlapping = false;
   checkCollisionsXY(map, onGround, wallLeft, wallRight, onCeiling, overlapping,
-                    playerRect);
+                    playerRect, isDown);
 
   kvelocityY = playerVelY;
   kvelocityX = playerVelX;
@@ -179,14 +178,19 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump, bool attack,
     applyForce(0, -4900); // instant upward push
   } else if (overlapping) {
     if (wallRight)
-      applyForce(-5, 0);
+      applyForce(-10, 0);
     if (wallLeft)
-      applyForce(5, 0);
+      applyForce(10, 0);
     if (onCeiling)
       applyForce(0, 5);
     if (onGround)
       applyForce(0, -5);
   }
+
+  if (isDown && !onGround) {
+    applyForce(10, 0);
+  }
+
   if (attack) {
     // Pick nearest enemy at spawn
     float closestDist = FLT_MAX;
@@ -267,9 +271,10 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump, bool attack,
   wYPos = playerRect.y;
 
   // ===== RENDER =====
-  SDL_Rect screenRect = {static_cast<int>(playerRect.x - camera.GetFloatPosition().x),
-                         static_cast<int>(playerRect.y - camera.GetFloatPosition().y),
-                         playerRect.w, playerRect.h};
+  SDL_Rect screenRect = {
+      static_cast<int>(playerRect.x - camera.GetFloatPosition().x),
+      static_cast<int>(playerRect.y - camera.GetFloatPosition().y),
+      playerRect.w, playerRect.h};
 
   playerTexture.animateSprite(wRenderer, playerTexture.getCols(),
                               playerTexture.getCells(), &screenRect, rotate,
