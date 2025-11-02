@@ -2,6 +2,7 @@
 #include "timer.hpp"
 #include <SDL2/SDL_blendmode.h>
 #include <SDL2/SDL_log.h>
+#include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
 // constructor
 int WTexture::fps = 8;
@@ -101,13 +102,15 @@ void WTexture::textTex(string str, TTF_Font *wFont, SDL_Color wColor,
 }
 
 // animate the sprite
+// animate the sprite
 void WTexture::animateSprite(SDL_Renderer *wRenderer, int cols, int cells,
                              SDL_Rect *destRect, double angle,
-                             SDL_Point *center, SDL_RendererFlip flip) {
+                             SDL_Point *center, SDL_RendererFlip flip,
+                             SDL_FRect *fRect) {
   static int frame = 0;
   static Timer animationTimer;
-
   static bool timerStarted = false;
+
   if (!timerStarted) {
     animationTimer.start();
     timerStarted = true;
@@ -126,24 +129,62 @@ void WTexture::animateSprite(SDL_Renderer *wRenderer, int cols, int cells,
   int frameWidth, frameHeight;
   if (cols != 0) {
     rows = cells / cols;
+
+    // --- FIX ---
+    // Add a guard against division by zero.
+    // If 'cells' is 0 (or 'cells' < 'cols'), 'rows' will be 0.
+    // We must prevent dividing by 'rows' if it's 0.
+    if (rows == 0) {
+      rows = 1; // Default to 1 row.
+    }
+    // --- END FIX ---
+
     frameWidth = wWidth / cols;
-    frameHeight = wHeight / rows;
+    frameHeight = wHeight / rows; // <-- This line was crashing
 
     srcRect.x = (frame % cols) * frameWidth;
     srcRect.y = (frame / cols) * frameHeight;
     srcRect.w = frameWidth;
     srcRect.h = frameHeight;
+  } else {
+    // --- FIX ---
+    // If cols is 0, we're not animating.
+    // We must initialize srcRect or SDL_RenderCopy will read garbage memory.
+    // This sets srcRect to the entire texture.
+    srcRect.x = 0;
+    srcRect.y = 0;
+    srcRect.w = wWidth;
+    srcRect.h = wHeight;
+    // --- END FIX ---
   }
 
-  render(wRenderer, &srcRect, destRect, angle, center, flip);
+  //  Automatically pick between integer or float rendering
+  if (fRect != NULL) {
+    fRender(wRenderer, &srcRect, fRect, angle, (SDL_FPoint *)center, flip);
+  } else {
+    render(wRenderer, &srcRect, destRect, angle, center, flip);
+  }
 }
 
+// render the texture using float precision
+void WTexture::fRender(SDL_Renderer *renderer, SDL_Rect *srcRect,
+                       SDL_FRect *destRect, double angle, SDL_FPoint *center,
+                       SDL_RendererFlip flip) {
+  if (angle != 0.0 || center != NULL || flip != SDL_FLIP_NONE) {
+    SDL_RenderCopyExF(renderer, wTexture, srcRect, destRect, angle, center,
+                      flip);
+  } else {
+    SDL_RenderCopyF(renderer, wTexture, srcRect, destRect);
+  }
+}
+SDL_Texture *WTexture::getTexture() { return wTexture; }
 // render the texture
 void WTexture::render(SDL_Renderer *renderer, SDL_Rect *srcRect,
                       SDL_Rect *destRect, double angle, SDL_Point *center,
                       SDL_RendererFlip flip) {
-  if (angle != 0.0 || center != NULL || flip != SDL_FLIP_NONE) {
-    // Use extended function if rotation or flip is involved
+  if (angle != 0.0 || center != NULL ||
+      flip != SDL_FLIP_NONE) { // Use extended function if rotation or flip is
+                               // involved
     SDL_RenderCopyEx(renderer, wTexture, srcRect, destRect, angle, center,
                      flip);
   } else {
@@ -151,7 +192,6 @@ void WTexture::render(SDL_Renderer *renderer, SDL_Rect *srcRect,
     SDL_RenderCopy(renderer, wTexture, srcRect, destRect);
   }
 }
-
 void WTexture::setColor(Uint8 red, Uint8 green, Uint8 blue) {
   // Modulate texture
   SDL_SetTextureColorMod(wTexture, red, green, blue);

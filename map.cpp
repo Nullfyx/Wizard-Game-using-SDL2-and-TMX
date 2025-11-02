@@ -207,7 +207,7 @@ void draw_layer(tmx_map *map, tmx_layer *layer, float dt) {
 
       flags =
           (layer->content.gids[(i * map->width) + j]) & ~TMX_FLIP_BITS_REMOVAL;
-      if (strcmp(tile->tileset->name, "enemies"))
+      if (strcmp(tile->tileset->name, "enemy1"))
         draw_tile(image, x, y, w, h, j * ts->tile_width, i * ts->tile_height,
                   op, flags);
     }
@@ -218,16 +218,34 @@ void draw_tile(void *image, unsigned int sx, unsigned int sy, unsigned int sw,
                unsigned int sh, unsigned int dx, unsigned int dy, float opacity,
                unsigned int flags) {
   SDL_Rect src_rect, dest_rect;
+
   src_rect.x = sx;
   src_rect.y = sy;
   src_rect.w = sw;
   src_rect.h = sh;
+
   dest_rect.x = (int)(dx - camera.GetFloatPosition().x);
   dest_rect.y = (int)(dy - camera.GetFloatPosition().y);
   dest_rect.w = sw;
   dest_rect.h = sh;
-  // Note: flags ignored; add flipping if needed
-  SDL_RenderCopy(wRenderer, (SDL_Texture *)image, &src_rect, &dest_rect);
+
+  // Apply opacity (0.0f–1.0f)
+  SDL_SetTextureAlphaMod((SDL_Texture *)image, (Uint8)(opacity * 255.0f));
+
+  // Optionally handle flipping
+  SDL_RendererFlip flip = SDL_FLIP_NONE;
+  if (flags & 1)
+    flip = (SDL_RendererFlip)(flip | SDL_FLIP_HORIZONTAL);
+  if (flags & 2)
+    flip = (SDL_RendererFlip)(flip | SDL_FLIP_VERTICAL);
+
+  // Use float-precision version for smooth camera scrolling
+  SDL_FRect dest_frect = {(float)dx - camera.GetFloatPosition().x,
+                          (float)dy - camera.GetFloatPosition().y, (float)sw,
+                          (float)sh};
+
+  SDL_RenderCopyExF(wRenderer, (SDL_Texture *)image, &src_rect, &dest_frect,
+                    0.0, NULL, flip);
 }
 
 void draw_polyline(double **points, double x, double y, int pointsc) {

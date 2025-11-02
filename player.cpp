@@ -7,7 +7,7 @@
 #include <SDL2/SDL_ttf.h>
 
 Player::Player() {
-  wWidth = 20;
+  wWidth = 26;
   wHeight = 20;
   wWeight = 2000; // N
   wMaxVel = 2;
@@ -15,13 +15,13 @@ Player::Player() {
   wLives = 9; // maybe its a cat!
   wXPos = 0;
   isGrounded = false;
-  wYPos = 180;
+  wYPos = 0;
   wXVel = 0;
   wGravityVel = (wWeight / gravity.g()) * dt * 10;
   wYVel = wGravityVel;
   flip = SDL_FLIP_NONE;
   rotate = 0.00;
-  wJumpPower = -100; // Newtons
+  wJumpPower = -200; // Newtons
   map = nullptr;
   jumping = false;
   isRoofed = false;
@@ -175,16 +175,22 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump, bool attack,
     applyForce(1000, 0);
   }
   if (jump && onGround && jumpTimer < 0.1f && !overlapping) {
-    applyForce(0, -4900); // instant upward push
+    applyForce(0, -6000); // instant upward push
   } else if (overlapping) {
-    if (wallRight)
-      applyForce(-10, 0);
-    if (wallLeft)
-      applyForce(10, 0);
-    if (onCeiling)
+    if (wallRight) {
+      applyForce(-200, 0);
       applyForce(0, 5);
+    }
+
+    if (wallLeft) {
+      applyForce(200, 0);
+      applyForce(0, 5);
+    }
+
+    if (onCeiling)
+      applyForce(0, 200);
     if (onGround)
-      applyForce(0, -5);
+      applyForce(0, -200);
   }
 
   if (isDown && !onGround) {
@@ -246,7 +252,7 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump, bool attack,
   kmaxVel = wMaxVel;
   // ===== PHYSICS MOVE =====
   move();
-  // print();
+  // print(onGround, onCeiling, wallLeft, wallRight, overlapping);
   for (int i = projectiles.size() - 1; i >= 0; --i) {
     if (projectiles[i]->destroyMe) {
       delete projectiles[i];
@@ -275,10 +281,13 @@ void Player::moveRender(bool moveRight, bool moveLeft, bool jump, bool attack,
       static_cast<int>(playerRect.x - camera.GetFloatPosition().x),
       static_cast<int>(playerRect.y - camera.GetFloatPosition().y),
       playerRect.w, playerRect.h};
+  SDL_FRect screenRectf = {(float)playerRect.x - camera.GetFloatPosition().x,
+                           (float)playerRect.y - camera.GetFloatPosition().y,
+                           (float)playerRect.w, (float)playerRect.h};
 
   playerTexture.animateSprite(wRenderer, playerTexture.getCols(),
-                              playerTexture.getCells(), &screenRect, rotate,
-                              NULL, flip);
+                              playerTexture.getCells(), NULL, rotate, NULL,
+                              flip, &screenRectf);
 }
 
 void Player::update(float d) {

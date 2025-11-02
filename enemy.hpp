@@ -13,7 +13,7 @@
 
 // ===================== CORE GLOBAL TYPES & CONSTANTS =====================
 // This is the new structural location for these definitions.
-const int MAX_TILES = 4096;
+const int MAX_TILES = 8999;
 
 typedef struct {
     int current_frame;

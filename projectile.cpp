@@ -1,97 +1,106 @@
-
 #include "collisions.hpp"
 #include "globals.hpp"
 #include "lightSystem.hpp"
 #include "mapglobal.hpp"
 #include "particleSystem.hpp"
 #include "projectile.hpp"
-#include <climits>
+
 #include <cmath>
+#include <cstdlib>
 #include <iostream>
 
 int projectile::index = 0;
 
 projectile::projectile(int startX, int startY, int targetX, int targetY) {
-  //    std::cout << "start: " << startX << "  " << startY << std::endl;
-  //    std::cout << "end: " << targetX << "  " << targetY << std::endl;
-
   texture.WIMG_Load("sprites/bolt.png");
-  physics.kvelocityX = 0.0f;
-  physics.kvelocityY = 0.0f;
-  destroyMe = false;
   index++;
 
-  // store world coordinates
+  destroyMe = false;
+  lifetime = 1800; // ms
+  speed = 7.0f;
+  maxRange = 900.0f;
+
   physics.kxPos = (float)startX;
   physics.kyPos = (float)startY;
 
-  // compute velocity
-  float dx = targetX - startX;
-  float dy = targetY - startY;
+  float dx = (float)(targetX - startX);
+  float dy = (float)(targetY - startY);
   float dist = std::sqrt(dx * dx + dy * dy);
+  if (dist == 0)
+    dist = 0.001f;
+
+  physics.kvelocityX = (dx / dist) * speed;
+  physics.kvelocityY = (dy / dist) * speed;
+
+  startXWorld = startX;
+  startYWorld = startY;
 
   angle = std::atan2(-dy, dx) * 180.0f / M_PI;
+  if (angle < 0)
+    angle += 360.0f;
 
-  if (dist != 0) {
-    float speed = 4.0f;
-    physics.kvelocityX = (dx / dist) * speed;
-    physics.kvelocityY = (dy / dist) * speed;
-  }
-
-  // initial rect
-  proRect = {(int)std::round(((float)startX - camera.GetFloatPosition().x)),
-             (int)std::round(((float)startY - camera.GetFloatPosition().y)),
-             (int)(10.0f), // Scale dimensions
-             (int)(1.0f)};
-  // start cooldown timer:world
+  proRect = {(int)(startX - camera.GetFloatPosition().x),
+             (int)(startY - camera.GetFloatPosition().y), 16, 2};
   timer.start();
-  timer.setTicks(cooldown * 1000);
 }
 
 void projectile::update(float dt) {
-  physics.move();
+  // --- MOVEMENT ---
+  physics.kxPos += physics.kvelocityX;
+  physics.kyPos += physics.kvelocityY;
 
+  // --- SCREEN POSITION UPDATE ---
   proRect.x = (int)(physics.kxPos - camera.GetFloatPosition().x);
   proRect.y = (int)(physics.kyPos - camera.GetFloatPosition().y);
-  ParticleSystem::active->setSpeedRange(0.2f, 1.5f);
-  ParticleSystem::active->setLifeRange(0.5f, 1.0f);
-  ParticleSystem::active->setSizeRange(0.1f, 0.8f);
-  ParticleSystem::active->setBaseColor(255, 255, 255, 1);
-  ParticleSystem::active->setColorVariance(50);
+
+  // --- PARTICLE TRAIL (smoky + flickery) ---
   particleAccumulator += dt;
-  if (particleAccumulator >= 0.1f) {
-    ParticleSystem::active->emit(proRect.x + camera.GetFloatPosition().x,
-                                 proRect.y + camera.GetFloatPosition().y, 4);
+  if (particleAccumulator >= 0.05f) {
+    ParticleSystem::active->setSpeedRange(0.2f, 1.8f);
+    ParticleSystem::active->setLifeRange(0.3f, 1.0f);
+    ParticleSystem::active->setSizeRange(0.1f, 0.9f);
+    ParticleSystem::active->setBaseColor(255, 200, 100, 1);
+    ParticleSystem::active->setColorVariance(40);
+
+    // Emit few scattered particles for cool trail
+    for (int i = 0; i < 3; ++i) {
+      float px = proRect.x + (std::rand() % 8 - 4);
+      float py = proRect.y + (std::rand() % 8 - 4);
+      ParticleSystem::active->emit(px + camera.GetFloatPosition().x,
+                                   py + camera.GetFloatPosition().y, 2);
+    }
     particleAccumulator = 0.0f;
   }
-  if (angle < 0)
-    angle += 360.0f;
-  // texture.render(wRenderer, nullptr, &proRect, -angle);
-  // // After moving proRect to current position
+
+  // --- LIGHT EFFECT (soft flicker, orangey hue) ---
   if (LightSystem::active) {
     Light l;
     l.x = proRect.x + proRect.w / 2.0f;
     l.y = proRect.y + proRect.h / 2.0f;
-    l.radius = 34;
-    l.intensity = 0.2f;
+    l.radius = 38 + (std::rand() % 10 - 5); // subtle flicker
+    l.intensity = 0.22f + ((std::rand() % 12) / 100.0f);
     l.r = 255;
-    l.g = 154;
-    l.b = 9;
-
+    l.g = 160;
+    l.b = 60;
     LightSystem::active->addLight(l);
   }
 
+  // --- RENDER ---
   texture.animateSprite(wRenderer, 1, 4, &proRect, -angle);
-  SDL_Rect futureRect = {(int)(physics.kxPos + physics.kvelocityX),
-                         (int)(physics.kyPos + physics.kvelocityY), proRect.w,
-                         proRect.h};
+
+  // --- RANGE & TIME CHECK ---
+  float dx = physics.kxPos - startXWorld;
+  float dy = physics.kyPos - startYWorld;
+  float dist = std::sqrt(dx * dx + dy * dy);
+
+  if (dist >= maxRange || timer.getTicks() >= lifetime)
+    destroyMe = true;
 }
 
-// return true if enough time passed since last fire
 bool projectile::canFire() {
   Uint32 elapsedMs = timer.getTicks();
   if (elapsedMs >= (Uint32)(cooldown * 1000)) {
-    timer.start(); // reset cooldown
+    timer.start();
     return true;
   }
   return false;

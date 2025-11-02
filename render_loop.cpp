@@ -1,4 +1,3 @@
-
 #include "bounding_box.hpp"
 #include "camera.hpp"
 #include "globals.hpp"
@@ -14,7 +13,12 @@
 #include <SDL2/SDL_ttf.h>
 #include <vector>
 vector<projectile *> projectiles = {};
-bool renderLoop(const char *path) {
+
+// --- FIX ---
+// Update function definition to match header
+bool renderLoop(const char *path, TTF_Font *globalFont,
+                SDL_Texture *backgroundTex) {
+  // --- END FIX ---
   bool isHit = false;
   float hitTimer = 0.0f;
   LightSystem l(1, 0.5f);
@@ -38,30 +42,50 @@ bool renderLoop(const char *path) {
   // Player setup
   Player player;
   player.setMap(map);
-  std::string src = "sprites/wizard/wizard2.png";
-  std::string rightSrc = "sprites/wizard/wizard2.png";
-  std::string leftSrc = "sprites/wizard/wizard2-flip.png";
 
-  player.playerTexture.setFPS(30);
-  int cols = 4;
-  int cells = 4;
-  player.playerTexture.WIMG_Load(src);
-  player.setWidth(12);
-  player.setHeight(12);
-  player.playerTexture.setCells(cells);
-  player.playerTexture.setCols(cols);
+  WTexture heroRightTex;
+  heroRightTex.WIMG_Load("sprites/hero-flipped.png");
+
+  WTexture heroLeftTex;
+  heroLeftTex.WIMG_Load("sprites/hero.png");
+  int cols = 6;
+  int cells = 6;
+  heroRightTex.setCols(cols);
+  heroRightTex.setCells(cells);
+  heroLeftTex.setCols(cols);
+  heroLeftTex.setCells(cells);
+
   player.playerTexture.setFPS(4);
+
+  player.playerTexture = heroRightTex;
+
+  player.setWidth(16);
+  player.setHeight(16);
+
+  // --- We no longer need to set this on the player directly ---
+  // player.playerTexture.setCells(cells);
+  // player.playerTexture.setCols(cols);
+  // ---
+
   player.draw = false;
-  font = TTF_OpenFont("./PixelOperator.ttf", 16);
+
+  // --- FIX ---
+  // Use the font that was passed in, don't load a new one.
+  font = globalFont;
   if (!font)
-    cout << "font couldn't be loaded! " << TTF_GetError() << endl;
-  // Load background texture once
-  SDL_Texture *backgroundTex = IMG_LoadTexture(wRenderer, "bg1.png");
+    cout << "font is null! " << TTF_GetError() << endl;
+  // --- END FIX ---
+
+  // --- FIX ---
+  // Use the background texture that was passed in.
+  // We don't need to load it.
   if (!backgroundTex) {
-    SDL_Log("Failed to load background texture: %s", SDL_GetError());
+    SDL_Log("Background texture was null!");
     tmx_map_free(map);
     return false;
   }
+  // --- END FIX ---
+
   int bgTexW, bgTexH;
   SDL_QueryTexture(backgroundTex, NULL, NULL, &bgTexW, &bgTexH);
 
@@ -95,11 +119,19 @@ bool renderLoop(const char *path) {
         switch (e.key.keysym.sym) {
         case SDLK_LEFT:
           moveLeft = true;
-          player.playerTexture.WIMG_Load(leftSrc);
+          // --- FIX ---
+          // Don't load from disk! Just assign the loaded texture.
+          // This now works because heroLeftTex has correct cols/cells.
+          player.playerTexture = heroLeftTex;
+          // --- END FIX ---
           break;
         case SDLK_RIGHT:
           moveRight = true;
-          player.playerTexture.WIMG_Load(rightSrc);
+          // --- FIX ---
+          // Don't load from disk! Just assign the loaded texture.
+          // This now works because heroRightTex has correct cols/cells.
+          player.playerTexture = heroRightTex;
+          // --- END FIX ---
           break;
         case SDLK_SPACE:
           jump = true;
@@ -128,13 +160,20 @@ bool renderLoop(const char *path) {
           isDown = false;
           break;
         default:
-          player.playerTexture.WIMG_Load(src);
+          // --- FIX ---
+          // If no keys are pressed, set to a default (e.g., right-facing)
+          if (!moveLeft && !moveRight) {
+            player.playerTexture = heroRightTex;
+          }
+          // --- END FIX ---
           break;
         }
       }
     }
     if (jump && moveLeft) {
-      player.playerTexture.WIMG_Load(leftSrc);
+      // --- FIX ---
+      player.playerTexture = heroLeftTex;
+      // --- END FIX ---
     }
     if (incDt) {
       player.accDt += deltaTime;
@@ -276,23 +315,24 @@ bool renderLoop(const char *path) {
     float parallaxFactorY = 0.3f;
 
     // Offset background movement with camera
-    int offsetX = (int)(camera.GetFloatPosition().x * parallaxFactorX);
-    int offsetY = (int)(camera.GetFloatPosition().y * parallaxFactorY);
+    float offsetX = (camera.GetFloatPosition().x * parallaxFactorX);
+    float offsetY = (camera.GetFloatPosition().y * parallaxFactorY);
+    // printf("%f", camera.GetFloatPosition().x);
 
     // Make the texture appear "smaller" by scaling down draw size
     // Example: draw at half size -> background looks zoomed OUT
-    int scaleDown = 2; // try 2, 3, or 4 for more repeats
+    int scaleDown = 3; // try 2, 3, or 4 for more repeats
 
-    int tileW = bgTexW / scaleDown;
-    int tileH = bgTexH / scaleDown;
-
-    // Loop through screen and tile the background
-    for (int y = -offsetY % tileH; y < SCREEN_HEIGHT; y += tileH) {
-      for (int x = -offsetX % tileW; x < SCREEN_WIDTH; x += tileW) {
-        SDL_Rect dst = {x, y, tileW, tileH};
-        SDL_RenderCopy(wRenderer, backgroundTex, NULL, &dst);
+    float tileW = bgTexW / scaleDown;
+    float tileH = bgTexH / scaleDown;
+    // Loop through the screen and tile the background properly
+    for (float y = fmodf(-offsetY, tileH); y < SCREEN_HEIGHT; y += tileH) {
+      for (float x = fmodf(-offsetX, tileW); x < SCREEN_WIDTH; x += tileW) {
+        SDL_FRect dst = {x, y, (float)tileW, (float)tileH};
+        SDL_RenderCopyF(wRenderer, backgroundTex, NULL, &dst);
       }
     }
+
     if (isHit) {
       hitTimer -= deltaTime;
       if (hitTimer <= 0.0f) {
@@ -399,7 +439,10 @@ bool renderLoop(const char *path) {
   }
 
   // Cleanup
-  SDL_DestroyTexture(backgroundTex);
+  // --- FIX ---
+  // We no longer destroy the background texture here,
+  // it will be destroyed in main.cpp
+  // --- END FIX ---
   tmx_map_free(map);
   return true;
 }

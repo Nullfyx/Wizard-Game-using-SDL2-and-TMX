@@ -147,9 +147,9 @@ void LightSystem::render(SDL_Renderer *renderer) {
   Uint8 darknessAlpha =
       static_cast<Uint8>(std::clamp(g_darknessFactor, 0.0f, 1.0f) * 255.0f);
 
-  SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-  SDL_SetRenderDrawColor(renderer, 0, 0, 0, darknessAlpha);
-  SDL_RenderFillRect(renderer, &screenRect);
+  // SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+  // SDL_SetRenderDrawColor(renderer, 0, 0, 0, darknessAlpha);
+  // SDL_RenderFillRect(renderer, &screenRect);
 
   // Step 2: Add lights
   SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_ADD);
@@ -162,7 +162,7 @@ void LightSystem::render(SDL_Renderer *renderer) {
       dst = {static_cast<int>(light.x - light.radius),
              static_cast<int>(light.y - light.radius), d, d};
       if (gradientTexCircle) {
-        SDL_SetTextureColorMod(gradientTexCircle, light.b, light.g, light.r);
+        SDL_SetTextureColorMod(gradientTexCircle, light.r, light.g, light.b);
         SDL_SetTextureAlphaMod(
             gradientTexCircle,
             static_cast<Uint8>(std::clamp(light.intensity, 0.0f, 1.0f) *
@@ -176,7 +176,7 @@ void LightSystem::render(SDL_Renderer *renderer) {
       dst = {static_cast<int>(light.x - light.radius),
              static_cast<int>(light.y - h / 2), w, h};
       if (gradientTexRectangle) {
-        SDL_SetTextureColorMod(gradientTexRectangle, light.b, light.g, light.r);
+        SDL_SetTextureColorMod(gradientTexRectangle, light.r, light.g, light.b);
         SDL_SetTextureAlphaMod(
             gradientTexRectangle,
             static_cast<Uint8>(std::clamp(light.intensity, 0.0f, 1.0f) *

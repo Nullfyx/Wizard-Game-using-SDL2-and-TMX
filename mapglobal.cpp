@@ -86,9 +86,9 @@ void build_enemies_from_map(tmx_map *map) {
               }
               e.texture.WIMG_Load(fullPath);
               e.texture.setBlendMode(SDL_BLENDMODE_BLEND);
-              e.texture.setCols(2);
-              e.texture.setFPS(20);
-              e.texture.setCells(4);
+              e.texture.setCols(6);
+              e.texture.setFPS(14);
+              e.texture.setCells(6);
               e.ts = ts;
               e.ts_firstgid = owner->firstgid;
               e.base_local_id = baseTile->id;

@@ -25,6 +25,7 @@ class WTexture {
 public:
   // constructor
   WTexture();
+  SDL_Texture* getTexture();
   int angle;
   // remove the texture
   void free();
@@ -43,12 +44,16 @@ public:
   void animateSprite(SDL_Renderer *wRenderer, int cols, int cells,
                      SDL_Rect *destRect, double angle = 0.0,
                      SDL_Point *center = NULL,
-                     SDL_RendererFlip flip = SDL_FLIP_NONE);
+                     SDL_RendererFlip flip = SDL_FLIP_NONE,  SDL_FRect *fRect = NULL);
 
   // render the texture
   void render(SDL_Renderer *renderer, SDL_Rect *srcRect, SDL_Rect *destRect,
               double angle = 0.0, SDL_Point *center = NULL,
               SDL_RendererFlip flip = SDL_FLIP_NONE);
+
+  void fRender(SDL_Renderer *renderer, SDL_Rect *srcRect,
+                       SDL_FRect *destRect, double angle = 0.0, SDL_FPoint *center = NULL,
+                       SDL_RendererFlip flip = SDL_FLIP_NONE); 
 
   void setColor(Uint8 red, Uint8 green, Uint8 blue);
 
